@@ -3083,10 +3083,10 @@
                 );
                 
                 // Check if touch is within expanded hit area
-                const hitX = obj.x - 30; // Larger touch area for mobile
-                const hitY = obj.y - 30;
-                const hitW = obj.w + 60;
-                const hitH = obj.h + 60;
+                const hitX = obj.x - 20; // Larger touch area for mobile
+                const hitY = obj.y - 20;
+                const hitW = obj.w + 50;
+                const hitH = obj.h + 50;
                 
                 if (touchEndX >= hitX && touchEndX <= hitX + hitW && 
                     touchEndY >= hitY && touchEndY <= hitY + hitH) {
