@@ -1,0 +1,3223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎂 Nicholas's Birthday Adventure - Professional Edition! 🎂</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 450px;
+            height: 640px;
+            background: #2C1810;
+            border: 6px solid #8B4513;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            display: block;
+            background: #87CEEB;
+            cursor: crosshair; /* Shows that everywhere is clickable */
+            touch-action: none; /* Prevents default touch behaviors */
+            user-select: none; /* Prevents text selection */
+        }
+        
+        /* Visual feedback for universal clicking */
+        .game-container:hover canvas {
+            cursor: crosshair;
+        }
+        
+        /* Hover effect on canvas to show it's interactive */
+        canvas:hover {
+            opacity: 0.95;
+            transition: opacity 0.1s ease;
+        }
+
+        .move-indicator {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: moveIndicatorPulse 0.5s ease-out;
+            z-index: 10;
+        }
+
+        @keyframes moveIndicatorPulse {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+
+
+        .ui-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #DEB887 0%, #CD853F 100%);
+            border-top: 4px solid #8B4513;
+            padding: 12px;
+            font-size: 12px;
+            color: #2F4F4F;
+            min-height: 60px;
+        }
+
+        .message-window {
+            background: #F5F5DC;
+            border: 3px solid #8B4513;
+            border-radius: 4px;
+            padding: 10px;
+            font-weight: bold;
+            line-height: 1.2;
+            min-height: 35px;
+            font-size: 11px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-window.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .direction-controls {
+            position: absolute;
+            bottom: 120px;
+            right: 15px;
+            width: 90px;
+            height: 90px;
+        }
+
+        .dpad {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #DEB887 0%, #CD853F 100%);
+            border: 2px solid #8B4513;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #2F4F4F;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dpad:active { transform: translateY(1px); }
+        .dpad-up { top: 0; left: 31px; }
+        .dpad-down { bottom: 0; left: 31px; }
+        .dpad-left { top: 31px; left: 0; }
+        .dpad-right { top: 31px; right: 0; }
+
+        .room-header {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.6);
+            color: #2F4F4F;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: none;
+        }
+
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #2C1810;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #FFD700;
+            font-family: 'Courier New', monospace;
+            z-index: 1000;
+        }
+
+        .loading-text {
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background: #8B4513;
+            border: 2px solid #DEB887;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .loading-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F0E68C 0%, #DAA520 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes heartFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.3); }
+        }
+
+        .hearts-effect {
+            position: absolute;
+            animation: heartFloat 3s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .birthday-sparkle {
+            position: absolute;
+            color: #FFD700;
+            font-size: 16px;
+            animation: sparkleAnim 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes sparkleAnim {
+            0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+        }
+
+        .confetti-effect {
+            position: absolute;
+            animation: confettiFall 4s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+            100% { opacity: 0; transform: translateY(200px) rotate(720deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="loading-screen" id="loadingScreen">
+            <div class="loading-text">🎂 Nicholas's Birthday Adventure 🎂</div>
+            <div class="loading-bar">
+                <div class="loading-fill" id="loadingFill"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Loading professional sprites...</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="450" height="640"></canvas>
+        <div class="room-header" id="roomHeader">🎂✨ HAPPY BIRTHDAY BABY!</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const game = {
+            currentRoom: 'bedroom',
+            player: { 
+                x: 200, y: 450,  // Moved to sand area (was y: 250)
+                direction: 'down', 
+                animFrame: 0, 
+                moving: false,
+                moveTimer: 0,
+                // CLICK-TO-MOVE PROPERTIES
+                targetX: null,
+                targetY: null,
+                autoMoving: false,
+                autoMoveSpeed: 4
+            },
+            cat: { 
+                x: 150, y: 400,  // Moved to sand area (was y: 200)
+                direction: 'right', 
+                animFrame: 0, 
+                moving: false,
+                followTimer: 0
+            },
+            crab: {
+                x: 400, y: 480,  // Starting position - moved behind tree B
+                direction: 'right',
+                animFrame: 0,
+                moving: false,
+                moveTimer: 0,
+                pauseTimer: 0,
+                targetX: 400,
+                targetY: 480
+            },
+            bonfire: {
+                animFrame: 0  // Bonfire continuously animates
+            },
+            discoveries: new Set(),
+            birthdayFound: false
+        };
+
+        const sprites = { 
+            nicholasSheet: null,
+            // OBJECT SPRITES
+            Gift: null,
+            Kitty: null,
+            bonfire: null,
+            picnic: null,
+            crab: null,
+            // COCONUT TREE SPRITES
+            'coconut tree single A': null,
+            'coconut tree single B': null,
+            'coconut tree twins': null,
+            // BEACH SPRITES
+            sea: null,
+            kitty_spritesheet: null,
+            nicholas_spritesheet: null,
+            bonfire_spritesheet: null,
+            heart_spritesheet: null,
+            mail_spritesheet: null,
+            // SHELL SPRITES
+            'Shell 1': null,
+            'Shell 2': null,
+            'Shell 3': null,
+            'Shell 4': null,
+            // CLOUD SPRITES
+            'cloud': null,
+            'cloud A': null,
+            'cloud B': null,
+            // SUN SPRITE
+            'sun': null,
+            // BIRD SPRITES
+            'Bird A': null,
+            'Bird B': null
+        };
+        let allSpritesLoaded = false;
+
+        // CONFIGURATION FOR HORIZONTAL SPRITESHEET
+        const NICHOLAS_SPRITE_CONFIG = {
+            frameWidth: 300,        // Each sprite is 300px wide
+            frameHeight: 300,       // Each sprite is 300px tall
+            totalFrames: 16,        // 16 sprites total in horizontal row
+            displayWidth: 73,       // Display size in game
+            displayHeight: 88,      // Display size in game
+            animationSpeed: 10,     // Animation speed
+            layout: 'horizontal',   // Horizontal strip layout
+            // FRAME MAPPING for 16-sprite horizontal layout
+            animations: {
+                down:  { startFrame: 0,  frames: 4 },  // Frames 0,1,2,3
+                up:    { startFrame: 4,  frames: 4 },  // Frames 4,5,6,7
+                left:  { startFrame: 8,  frames: 4 },  // Frames 8,9,10,11
+                right: { startFrame: 12, frames: 4 }   // Frames 12,13,14,15
+            }
+        };
+
+        // CAT SPRITESHEET CONFIGURATION
+        const CAT_SPRITE_CONFIG = {
+            frameWidth: 250,        // Each cat sprite is 250px wide
+            frameHeight: 280,       // Each cat sprite is 280px tall
+            totalFrames: 12,        // 12 sprites total in horizontal row
+            displayWidth: 38,       // Display size in game (40 * 0.95 = 38)
+            displayHeight: 43,      // Display size in game (45 * 0.95 = 42.75 ≈ 43)
+            animationSpeed: 15,     // Slower animation for cat
+            layout: 'horizontal',   // Horizontal strip layout
+            // FRAME MAPPING for 12-sprite horizontal layout
+            animations: {
+                down:  { startFrame: 0,  frames: 3 },  // Frames 0,1,2
+                up:    { startFrame: 3,  frames: 3 },  // Frames 3,4,5
+                left:  { startFrame: 6,  frames: 3 },  // Frames 6,7,8
+                right: { startFrame: 9,  frames: 3 }   // Frames 9,10,11
+            }
+        };
+
+        // BONFIRE SPRITESHEET CONFIGURATION
+        const BONFIRE_SPRITE_CONFIG = {
+            frameWidth: 1039,       // 4156 ÷ 4 frames = 1039px per frame
+            frameHeight: 1296,      // Full height from console log
+            totalFrames: 4,         // 4 flame animation frames (1 row, 4 columns)
+            displayWidth: 90,       // Display size in game
+            displayHeight: 100,     // Display size in game
+            animationSpeed: 20,     // Slower animation (was 8, now 20)
+            layout: 'horizontal'    // Horizontal strip layout
+        };
+
+        let debugInfo = {
+            spriteLoaded: false,
+            spriteSize: 'Unknown',
+            currentDirection: 'down',
+            currentFrame: 0,
+            sourceX: 0
+        };
+
+        // Room data
+        const rooms = {
+            bedroom: {
+                title: "Nicholas's Tropical Paradise 🌴🥥",
+                objects: [
+                    { 
+                        x: 0, y: 150, w: 480, h: 230, type: 'sea', 
+                        spriteKey: 'sea',
+                        isBackground: true // Special flag to render behind other objects
+                    },
+                    // CLOUDS IN SKY AREA
+                    // Cloud A removed as requested, sun added behind its location
+                    { 
+                        x: 200, y: 30, w: 80, h: 80, type: 'sun', 
+                        spriteKey: 'sun',
+                        message: "☀️🎂 The bright birthday sun shining down on Nicholas's special day! What a perfect sunny celebration! 🌞✨",
+                        isBackground: true
+                    },
+                    { 
+                        x: 195, y: -5, w: 202, h: 130, type: 'cloud2', 
+                        spriteKey: 'cloud B',
+                        isBackground: true
+                    },
+                    { 
+                        x: -10, y: 40, w: 165, h: 105, type: 'cloud3', 
+                        spriteKey: 'cloud',
+                        isBackground: true
+                    },
+                    // FLYING BIRDS IN SKY
+                    { 
+                        x: 120, y: 50, w: 30, h: 25, type: 'bird1', 
+                        spriteKey: 'Bird A',
+                        message: "🐦✨ A beautiful bird soaring through Nicholas's birthday sky! Even the wildlife is celebrating this special day! 🎉",
+                        isBackground: true
+                    },
+                    { 
+                        x: 300, y: 110, w: 32, h: 28, type: 'bird2', 
+                        spriteKey: 'Bird B',
+                        message: "🐦🎂 Another lovely bird flying by! The sky is full of life and joy for Nicholas's birthday celebration! ✨",
+                        isBackground: true
+                    },
+                    { 
+                        x: 96.5, y: 220, w: 200, h: 180, type: 'picnic', 
+                        spriteKey: 'picnic',
+                        message: "Let's celebrate you properly. Let's have a nice beach picnic when you're back from Canada. You deserve the softest, happiest kind of day. Can't wait to make more memories with you. 🧺✨🎂🍾"
+                    },
+                    { 
+                        x: 270, y: 300, w: 55, h: 78, type: 'gift', 
+                        spriteKey: 'Gift',
+                        message: "🎂✨ HAPPY BIRTHDAY BABY! ✨🎂\n\nThank you for making every ordinary day with you feels so special. You bring joy into the little things, and being by your side makes life feels so brighter. Happy birthday, my love. I'm so grateful for you—today and always.",
+                        special: false
+                    },
+                    { 
+                        x: 280, y: 270, w: 35, h: 28, type: 'mail', 
+                        spriteKey: 'mail_spritesheet'
+                    },
+                    { 
+                        x: 250, y: 500, w: 26, h: 26, type: 'shell1', 
+                        spriteKey: 'Shell 1',
+                        message: "🐚✨ A beautiful seashell washed up on Nicholas's birthday beach! These treasures from the ocean make the celebration even more special! 🌊"
+                    },
+                    { 
+                        x: 55, y: 550, w: 23, h: 23, type: 'shell3', 
+                        spriteKey: 'Shell 3',
+                        message: "🌊✨ What a perfect shell! The ocean has gifted Nicholas with beautiful decorations for his special day! 🎂"
+                    },
+                    { 
+                        x: 350, y: 325, w: 27, h: 27, type: 'shell4', 
+                        spriteKey: 'Shell 4',
+                        message: "🐚🎆 A delicate shell sparkling in the birthday sunshine! Nature is celebrating Nicholas too! ☀️🎉"
+                    },
+                    { 
+                        x: 50, y: 350, w: 90, h: 100, type: 'bonfire', 
+                        spriteKey: 'bonfire',
+                        message: "🔥✨ A cozy beach bonfire! Perfect for Nicholas's birthday celebration as the sun sets. The warm glow creates such a magical atmosphere! 🌅🎉"
+                    },
+                    // COCONUT TREES - Creating a tropical paradise!
+                    { 
+                        x: -20, y: 65, w: 144, h: 240, type: 'coconut1', 
+                        spriteKey: 'coconut tree single A',
+                        message: "🥥🌴 A magnificent coconut tree swaying in the ocean breeze! This tropical paradise is perfect for Nicholas's birthday celebration! The coconuts look ready to fall! 🏖️✨",
+                        isBackground: true
+                    },
+                    { 
+                        x: 270, y: 360, w: 159, h: 262, type: 'coconut2', 
+                        spriteKey: 'coconut tree single B',
+                        message: "🌴🎂 Another beautiful coconut tree! The palm fronds are dancing in celebration of Nicholas's special day! This beach paradise is absolutely perfect! 🥥🌊",
+                        isBackground: true
+                    }
+                ]
+            },
+            livingroom: {
+                title: "Cozy Living Room 🛋️",
+                objects: [
+                    { 
+                        x: 200, y: 350, w: 100, h: 100, type: 'gift', 
+                        spriteKey: 'Gift',
+                        message: "birthday_surprise", 
+                        special: true 
+                    }
+                ]
+            }
+        };
+
+        async function loadSprites() {
+            console.log('🔥 Loading HORIZONTAL spritesheet AND object sprites...');
+            updateLoadingText('Loading your HORIZONTAL 16-sprite layout...');
+            
+            const spritePromises = [];
+            
+            // Load Nicholas spritesheet
+            const nicholasPromise = new Promise((resolve) => {
+                const spritesheetImg = new Image();
+                spritesheetImg.onload = () => {
+                    sprites.nicholasSheet = spritesheetImg;
+                    debugInfo.spriteLoaded = true;
+                    debugInfo.spriteSize = `${spritesheetImg.width}x${spritesheetImg.height}`;
+                    console.log('✅ Nicholas spritesheet loaded!');
+                    resolve();
+                };
+                spritesheetImg.onerror = () => {
+                    console.error('❌ Nicholas spritesheet failed!');
+                    debugInfo.spriteLoaded = false;
+                    resolve();
+                };
+                spritesheetImg.src = 'items/nicholas_spritesheet.png';
+            });
+            spritePromises.push(nicholasPromise);
+            
+            // Load sea.png with dimension calculation
+            const seaPromise = new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    sprites.sea = img;
+                    
+                    // Calculate proper dimensions maintaining aspect ratio
+                    const naturalWidth = img.width;
+                    const naturalHeight = img.height;
+                    const aspectRatio = naturalWidth / naturalHeight;
+                    
+                    console.log(`🌊 Sea.png loaded! Natural size: ${naturalWidth}x${naturalHeight}`);
+                    console.log(`📐 Aspect ratio: ${aspectRatio.toFixed(3)}`);
+                    
+                    // Calculate dimensions to fit within our area (width=480, max height available)
+                    const maxWidth = 480;
+                    const availableHeight = 230; // Our current allocation
+                    
+                    let calculatedWidth, calculatedHeight;
+                    
+                    if (aspectRatio > (maxWidth / availableHeight)) {
+                        // Image is wider - constrain by width
+                        calculatedWidth = maxWidth;
+                        calculatedHeight = Math.round(maxWidth / aspectRatio);
+                    } else {
+                        // Image is taller - constrain by height  
+                        calculatedHeight = availableHeight;
+                        calculatedWidth = Math.round(availableHeight * aspectRatio);
+                    }
+                    
+                    console.log(`🎯 Calculated dimensions: ${calculatedWidth}x${calculatedHeight}`);
+                    
+                    // Update the sea object dimensions
+                    const seaObject = rooms.bedroom.objects.find(obj => obj.type === 'sea');
+                    if (seaObject) {
+                        seaObject.w = calculatedWidth;
+                        seaObject.h = calculatedHeight;
+                        // Center horizontally if width is less than 480
+                        seaObject.x = Math.round((480 - calculatedWidth) / 2);
+                        seaObject.y = 150; // Ensure Y position is correct
+                        
+                        console.log(`✅ Sea object updated: x=${seaObject.x}, y=${seaObject.y}, w=${seaObject.w}, h=${seaObject.h}`);
+                    }
+                    
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.error('❌ sea.png failed to load!');
+                    resolve();
+                };
+                img.src = 'items/sea.png';
+            });
+            spritePromises.push(seaPromise);
+            
+            // Load other object sprites
+            const objectSprites = ['Gift', 'Kitty', 'bonfire', 'picnic', 'crab', 'coconut tree single A', 'coconut tree single B', 'coconut tree twins', 'kitty_spritesheet', 'nicholas_spritesheet', 'bonfire_spritesheet', 'heart_spritesheet', 'mail_spritesheet', 'Shell 1', 'Shell 2', 'Shell 3', 'Shell 4', 'cloud', 'cloud A', 'cloud B', 'sun', 'Bird A', 'Bird B'];
+            
+            objectSprites.forEach(spriteName => {
+                const promise = new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        sprites[spriteName] = img;
+                        console.log(`✅ ${spriteName}.png loaded! (${img.width}x${img.height})`);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        console.error(`❌ ${spriteName}.png failed to load!`);
+                        resolve();
+                    };
+                    img.src = `items/${spriteName}.png`;
+                });
+                spritePromises.push(promise);
+            });
+            
+            // Wait for all sprites to load
+            await Promise.all(spritePromises);
+            
+            allSpritesLoaded = true;
+            console.log('✨ All sprites loaded successfully!');
+        }
+
+        function drawNicholas(x, y, direction, frame) {
+            if (sprites.nicholasSheet && debugInfo.spriteLoaded) {
+                drawHorizontalSpritesheetNicholas(x, y, direction, frame);
+            } else {
+                drawFallbackNicholas(x, y, direction, frame);
+            }
+            
+            debugInfo.currentDirection = direction;
+        }
+
+        function drawHorizontalSpritesheetNicholas(x, y, direction, frame) {
+            try {
+                const sprite = sprites.nicholasSheet;
+                const config = NICHOLAS_SPRITE_CONFIG;
+                const anim = config.animations[direction];
+                
+                // Calculate which frame in the animation sequence
+                let frameIndex = 0;
+                if (game.player.moving || game.player.autoMoving) {
+                    frameIndex = Math.floor(frame / config.animationSpeed) % anim.frames;
+                } else {
+                    frameIndex = 0; // Standing frame
+                }
+                
+                // Calculate absolute frame number in the horizontal strip
+                const absoluteFrame = anim.startFrame + frameIndex;
+                
+                // Calculate source X position (Y is always 0 for horizontal layout)
+                const sourceX = absoluteFrame * config.frameWidth;
+                const sourceY = 0;
+                
+
+                
+                // Draw the sprite
+                ctx.drawImage(
+                    sprite,
+                    sourceX, sourceY, config.frameWidth, config.frameHeight,  // Source
+                    x, y, config.displayWidth, config.displayHeight         // Destination
+                );
+                
+            } catch (error) {
+                console.error('❌ Horizontal spritesheet draw failed:', error);
+                drawFallbackNicholas(x, y, direction, frame);
+            }
+        }
+
+        function drawFallbackNicholas(x, y, direction, frame) {
+            const config = NICHOLAS_SPRITE_CONFIG;
+            const scale = 2;
+            const px = (pX, pY, color) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(x + pX * scale, y + pY * scale, scale, scale);
+            };
+            
+            // Enhanced Nicholas pixel art
+            // Hair (buzz cut)
+            px(2, 0, '#8B4513'); px(3, 0, '#A0522D'); px(4, 0, '#A0522D'); px(5, 0, '#8B4513');
+            px(1, 1, '#8B4513'); px(2, 1, '#D2B48C'); px(3, 1, '#D2B48C'); px(4, 1, '#D2B48C'); px(5, 1, '#A0522D'); px(6, 1, '#8B4513');
+            
+            // Face
+            px(1, 2, '#A0522D'); px(2, 2, '#FDBCB4'); px(3, 2, '#FDBCB4'); px(4, 2, '#FDBCB4'); px(5, 2, '#FDBCB4'); px(6, 2, '#A0522D');
+            px(1, 3, '#8B4513'); px(2, 3, '#FDBCB4'); px(3, 3, '#000'); px(4, 3, '#FDBCB4'); px(5, 3, '#000'); px(6, 3, '#FDBCB4'); px(7, 3, '#8B4513');
+            
+            // Facial hair
+            px(1, 4, '#8B4513'); px(2, 4, '#654321'); px(3, 4, '#8B4513'); px(4, 4, '#654321'); px(5, 4, '#8B4513'); px(6, 4, '#654321'); px(7, 4, '#8B4513');
+            px(2, 5, '#FDBCB4'); px(3, 5, '#654321'); px(4, 5, '#654321'); px(5, 5, '#654321'); px(6, 5, '#FDBCB4');
+            
+            // Black gym shirt
+            px(2, 6, '#FDBCB4'); px(3, 6, '#1a1a1a'); px(4, 6, '#1a1a1a'); px(5, 6, '#1a1a1a'); px(6, 6, '#FDBCB4');
+            px(1, 7, '#FDBCB4'); px(2, 7, '#1a1a1a'); px(3, 7, '#333333'); px(4, 7, '#1a1a1a'); px(5, 7, '#333333'); px(6, 7, '#1a1a1a'); px(7, 7, '#FDBCB4');
+            px(0, 8, '#FDBCB4'); px(1, 8, '#1a1a1a'); px(2, 8, '#1a1a1a'); px(3, 8, '#1a1a1a'); px(4, 8, '#1a1a1a'); px(5, 8, '#1a1a1a'); px(6, 8, '#1a1a1a'); px(7, 8, '#1a1a1a'); px(8, 8, '#FDBCB4');
+            
+            // Legs with walking animation
+            const legOffset = (game.player.moving && (direction === 'down' || direction === 'up')) ? 
+                (frame % 8 < 4 ? 0 : 1) : 0;
+            
+            px(2, 9 + legOffset, '#1a1a1a'); px(3, 9 + legOffset, '#1a1a1a'); px(5, 9 - legOffset, '#1a1a1a'); px(6, 9 - legOffset, '#1a1a1a');
+            px(2, 10 + legOffset, '#1a1a1a'); px(3, 10 + legOffset, '#1a1a1a'); px(5, 10 - legOffset, '#1a1a1a'); px(6, 10 - legOffset, '#1a1a1a');
+            
+            // Shoes
+            px(1, 11 + legOffset, '#000'); px(2, 11 + legOffset, '#000'); px(3, 11 + legOffset, '#000'); px(4, 11 + legOffset, '#000');
+            px(5, 11 - legOffset, '#000'); px(6, 11 - legOffset, '#000'); px(7, 11 - legOffset, '#000');
+        }
+
+
+
+        function drawBonfire(x, y, frame) {
+            if (sprites.bonfire_spritesheet && allSpritesLoaded) {
+                drawBonfireSpritesheet(x, y, frame);
+            } else {
+                drawFallbackBonfire(x, y, frame);
+            }
+        }
+
+        function drawBonfireSpritesheet(x, y, frame) {
+            try {
+                const sprite = sprites.bonfire_spritesheet;
+                const config = BONFIRE_SPRITE_CONFIG;
+                
+                if (!sprite) {
+                    drawFallbackBonfire(x, y, frame);
+                    return;
+                }
+                
+                // Calculate which frame in the animation sequence (continuous animation)
+                const frameIndex = Math.floor(frame / config.animationSpeed) % config.totalFrames;
+                
+                // Calculate source X position (Y is always 0 for horizontal layout)
+                const sourceX = frameIndex * config.frameWidth;
+                const sourceY = 0;
+                
+                // Draw the bonfire sprite
+                ctx.drawImage(
+                    sprite,
+                    sourceX, sourceY, config.frameWidth, config.frameHeight,  // Source
+                    x, y, config.displayWidth, config.displayHeight         // Destination
+                );
+                
+            } catch (error) {
+                console.error('❌ Bonfire spritesheet draw failed:', error);
+                drawFallbackBonfire(x, y, frame);
+            }
+        }
+
+        function drawAnimatedMail(x, y, width, height, spriteKey, frame) {
+            const time = Date.now() * 0.001;
+            
+            // 1. ENHANCED FLOATING MOTION (more pronounced up/down movement)
+            const floatY = Math.sin(time * 1.2) * 3; // 3px up/down (increased from 1.5px)
+            const floatX = Math.sin(time * 0.8) * 1; // Slight horizontal sway
+            const finalY = y + floatY;
+            const finalX = x + floatX;
+            
+            // 2. SUBTLE ROTATION (like swaying in breeze)
+            const rotation = Math.sin(time * 1.0) * 0.08; // Slightly more rotation
+            
+            // 3. DRAW THE ANIMATED MAIL SPRITE (4-frame horizontal animation)
+            const sprite = sprites[spriteKey];
+            if (sprite && allSpritesLoaded) {
+                ctx.save();
+                
+                // Apply rotation around center of mail
+                const centerX = finalX + width / 2;
+                const centerY = finalY + height / 2;
+                
+                ctx.translate(centerX, centerY);
+                ctx.rotate(rotation);
+                
+                // Mail animation configuration (4 frames horizontal)
+                const totalFrames = 4;
+                const frameWidth = sprite.width / totalFrames; // Each frame width
+                const frameHeight = sprite.height; // Full height
+                const animationSpeed = 15; // Slightly faster for more lively animation
+                
+                // Calculate which frame to show
+                const currentFrame = Math.floor(frame / animationSpeed) % totalFrames;
+                const sourceX = currentFrame * frameWidth;
+                const sourceY = 0;
+                
+                ctx.drawImage(
+                    sprite,
+                    sourceX, sourceY, frameWidth, frameHeight, // Source rectangle
+                    -width / 2, -height / 2, width, height // Destination rectangle
+                );
+                
+                ctx.restore();
+            } else {
+                // Fallback mail (simple envelope shape)
+                ctx.save();
+                ctx.translate(finalX + width / 2, finalY + height / 2);
+                ctx.rotate(rotation);
+                
+                // Envelope body (light pink)
+                ctx.fillStyle = '#FFE4E1';
+                ctx.fillRect(-width / 2, -height / 2, width, height);
+                
+                // Envelope flap (darker pink)
+                ctx.fillStyle = '#FFB6C1';
+                ctx.beginPath();
+                ctx.moveTo(-width / 2, -height / 2);
+                ctx.lineTo(0, -height / 4);
+                ctx.lineTo(width / 2, -height / 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Red heart
+                ctx.fillStyle = '#FF1493';
+                ctx.font = '10px serif'; // Slightly larger font for bigger mail
+                ctx.textAlign = 'center';
+                ctx.fillText('❤️', 0, 3);
+                
+                ctx.restore();
+            }
+            
+            // Add sparkle trail (every few frames)
+            if (Math.random() < 0.3) { // 30% chance each frame
+                addMailSparkle(finalX + width / 2, finalY + height / 2);
+            }
+        }
+
+        function drawAnimatedSun(x, y, width, height, spriteKey) {
+            const time = Date.now() * 0.001;
+            
+            // 1. GENTLE FLOATING MOTION (2px up/down)
+            const floatY = Math.sin(time * 0.8) * 2;
+            const finalY = y + floatY;
+            
+            // 2. SOFT GLOW EFFECT
+            const glowOpacity = 0.15 + Math.sin(time * 1.2) * 0.1; // 0.05 to 0.25
+            const glowSize = width * 1.3 + Math.sin(time * 1.5) * 5;
+            
+            // Draw the glow behind the sun
+            const centerX = x + width / 2;
+            const centerY = finalY + height / 2;
+            
+            const glowGradient = ctx.createRadialGradient(
+                centerX, centerY, width * 0.3,
+                centerX, centerY, glowSize / 2
+            );
+            glowGradient.addColorStop(0, `rgba(255, 215, 0, ${glowOpacity})`);
+            glowGradient.addColorStop(0.7, `rgba(255, 165, 0, ${glowOpacity * 0.5})`);
+            glowGradient.addColorStop(1, 'rgba(255, 140, 0, 0)');
+            
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, glowSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 3. OPACITY/BRIGHTNESS CHANGES
+            const brightness = 0.85 + Math.sin(time * 0.6) * 0.15; // 0.7 to 1.0
+            
+            // Apply brightness by setting global alpha
+            ctx.save();
+            ctx.globalAlpha = brightness;
+            
+            // Draw the actual sun sprite
+            const sprite = sprites[spriteKey];
+            if (sprite && allSpritesLoaded) {
+                ctx.drawImage(sprite, x, finalY, width, height);
+            } else {
+                // Fallback sun
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, Math.min(width, height) / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore(); // Restore original alpha
+        }
+
+        function drawAnimatedBird(x, y, width, height, spriteKey, birdType) {
+            const time = Date.now() * 0.001;
+            
+            // Different phase for each bird so they don't bob in sync
+            const phase = birdType === 'bird1' ? 0 : Math.PI * 0.7;
+            
+            // 1. SUBTLE BOBBING MOTION (3px up/down)
+            const bobbingY = Math.sin(time * 1.2 + phase) * 3;
+            const finalY = y + bobbingY;
+            
+            // 2. DRAW THE BIRD SPRITE
+            const sprite = sprites[spriteKey];
+            if (sprite && allSpritesLoaded) {
+                ctx.drawImage(sprite, x, finalY, width, height);
+            } else {
+                // Fallback bird (simple triangle)
+                ctx.fillStyle = birdType === 'bird1' ? '#8B4513' : '#654321';
+                ctx.beginPath();
+                const centerX = x + width / 2;
+                const centerY = finalY + height / 2;
+                
+                // Simple bird shape
+                ctx.moveTo(centerX - width * 0.3, centerY);
+                ctx.lineTo(centerX + width * 0.3, centerY - height * 0.2);
+                ctx.lineTo(centerX + width * 0.3, centerY + height * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Wing details
+                ctx.fillStyle = birdType === 'bird1' ? '#A0522D' : '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(centerX - width * 0.1, centerY, width * 0.15, height * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawAnimatedCoconutTree(x, y, width, height, spriteKey, treeType) {
+            const time = Date.now() * 0.001;
+            
+            // Different swaying patterns for each tree
+            let phase = 0;
+            let swayIntensity = 1;
+            
+            if (treeType === 'coconut1') {
+                phase = 0;
+                swayIntensity = 1.2; // Left tree sways more
+            } else if (treeType === 'coconut2') {
+                phase = Math.PI * 0.6; // Different timing
+                swayIntensity = 0.8; // Right tree sways less
+            } else if (treeType === 'coconut3') {
+                phase = Math.PI * 0.3; // Twin trees have their own rhythm
+                swayIntensity = 1.0;
+            }
+            
+            // 1. GENTLE SWAYING MOTION (like palm trees in ocean breeze)
+            const swayX = Math.sin(time * 0.8 + phase) * 3 * swayIntensity;
+            const swayY = Math.sin(time * 1.2 + phase) * 1.5 * swayIntensity;
+            
+            const finalX = x + swayX;
+            const finalY = y + swayY;
+            
+            // 2. DRAW THE COCONUT TREE SPRITE
+            const sprite = sprites[spriteKey];
+            if (sprite && allSpritesLoaded) {
+                ctx.save();
+                
+                // Add subtle rotation for more realistic swaying
+                const rotation = Math.sin(time * 0.7 + phase) * 0.02 * swayIntensity; // 0.02 radians ≈ 1 degree
+                const centerX = finalX + width / 2;
+                const centerY = finalY + height;
+                
+                ctx.translate(centerX, centerY);
+                ctx.rotate(rotation);
+                ctx.drawImage(sprite, -width / 2, -height, width, height);
+                
+                ctx.restore();
+            } else {
+                // Fallback coconut tree (simple brown trunk with green top)
+                ctx.fillStyle = '#8B4513'; // Brown trunk
+                ctx.fillRect(finalX + width * 0.4, finalY + height * 0.3, width * 0.2, height * 0.7);
+                
+                // Palm fronds (green)
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                const centerX = finalX + width / 2;
+                const centerY = finalY + height * 0.2;
+                ctx.ellipse(centerX, centerY, width * 0.4, height * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Coconuts (brown dots)
+                ctx.fillStyle = '#8B4513';
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        centerX + (i - 1) * 8 + swayX * 0.5, 
+                        centerY + 15 + swayY * 0.5, 
+                        4, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawFallbackBonfire(x, y, frame) {
+            // Animated fallback bonfire using rectangles
+            const scale = 4;
+            const flameHeight = 8 + Math.sin(frame * 0.3) * 2; // Flickering height
+            const flameFlicker = Math.sin(frame * 0.5) * 2;
+            
+            const px = (pX, pY, color, width = scale, height = scale) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(x + pX * scale, y + pY * scale, width, height);
+            };
+            
+            // Wood base (brown)
+            px(2, 18, '#8B4513', scale * 8, scale * 4);
+            px(1, 19, '#654321', scale * 10, scale * 2);
+            px(0, 20, '#5D4037', scale * 12, scale * 2);
+            
+            // Main flames (animated)
+            const baseY = 18;
+            
+            // Center flame (largest)
+            px(5, baseY - flameHeight, '#FF4500', scale * 2, scale * flameHeight);
+            px(5, baseY - flameHeight + 2, '#FF6B00', scale * 2, scale * (flameHeight - 2));
+            px(5, baseY - flameHeight + 4, '#FFA500', scale * 2, scale * (flameHeight - 4));
+            
+            // Left flame
+            px(3 + flameFlicker, baseY - flameHeight + 2, '#FF4500', scale * 1.5, scale * (flameHeight - 2));
+            px(3 + flameFlicker, baseY - flameHeight + 4, '#FFA500', scale * 1.5, scale * (flameHeight - 4));
+            
+            // Right flame
+            px(7 - flameFlicker, baseY - flameHeight + 1, '#FF4500', scale * 1.5, scale * (flameHeight - 1));
+            px(7 - flameFlicker, baseY - flameHeight + 3, '#FFA500', scale * 1.5, scale * (flameHeight - 3));
+            
+            // Small flame tips (yellow/white)
+            px(5, baseY - flameHeight - 1 + Math.sin(frame * 0.8), '#FFFF00', scale, scale);
+            px(4 + flameFlicker, baseY - flameHeight + 1 + Math.sin(frame * 0.6), '#FFFF88', scale * 0.5, scale * 0.5);
+            px(7 - flameFlicker, baseY - flameHeight + Math.sin(frame * 0.7), '#FFFF88', scale * 0.5, scale * 0.5);
+        }
+
+        function drawCrab(x, y, direction, frame) {
+            // For now, just draw the sprite or fallback since we don't have a crab spritesheet
+            const sprite = sprites.crab;
+            if (sprite && allSpritesLoaded) {
+                ctx.drawImage(sprite, x, y, 35, 30); // Use the object size
+            } else {
+                // Fallback crab pixel art
+                const scale = 2;
+                const px = (pX, pY, color) => {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x + pX * scale, y + pY * scale, scale, scale);
+                };
+                
+                // Crab body (orange-red)
+                px(3, 3, '#FF6B47'); px(4, 3, '#FF6B47'); px(5, 3, '#FF6B47'); px(6, 3, '#FF6B47');
+                px(2, 4, '#FF6B47'); px(3, 4, '#FF4500'); px(4, 4, '#FF4500'); px(5, 4, '#FF4500'); px(6, 4, '#FF4500'); px(7, 4, '#FF6B47');
+                px(2, 5, '#FF6B47'); px(3, 5, '#FF4500'); px(4, 5, '#FF4500'); px(5, 5, '#FF4500'); px(6, 5, '#FF4500'); px(7, 5, '#FF6B47');
+                px(3, 6, '#FF6B47'); px(4, 6, '#FF6B47'); px(5, 6, '#FF6B47'); px(6, 6, '#FF6B47');
+                
+                // Crab claws (darker red)
+                px(1, 3, '#CC4125'); px(8, 3, '#CC4125');
+                px(0, 4, '#CC4125'); px(1, 4, '#CC4125'); px(8, 4, '#CC4125'); px(9, 4, '#CC4125');
+                px(1, 5, '#CC4125'); px(8, 5, '#CC4125');
+                
+                // Crab legs
+                px(2, 6, '#CC4125'); px(3, 7, '#CC4125'); px(6, 7, '#CC4125'); px(7, 6, '#CC4125');
+                px(1, 6, '#CC4125'); px(2, 7, '#CC4125'); px(7, 7, '#CC4125'); px(8, 6, '#CC4125');
+                
+                // Eyes (black dots)
+                px(3, 2, '#000'); px(6, 2, '#000');
+            }
+        }
+
+        function drawCat(x, y, direction, frame) {
+            if (sprites.kitty_spritesheet && allSpritesLoaded) {
+                drawCatSpritesheet(x, y, direction, frame);
+            } else {
+                drawFallbackCat(x, y, direction, frame);
+            }
+        }
+
+        function drawCatSpritesheet(x, y, direction, frame) {
+            try {
+                const sprite = sprites.kitty_spritesheet;
+                const config = CAT_SPRITE_CONFIG;
+                const anim = config.animations[direction];
+                
+                // Calculate which frame in the animation sequence
+                let frameIndex = 0;
+                if (game.cat.moving) {
+                    frameIndex = Math.floor(frame / config.animationSpeed) % anim.frames;
+                } else {
+                    frameIndex = 0; // Standing frame
+                }
+                
+                // Calculate absolute frame number in the horizontal strip
+                const absoluteFrame = anim.startFrame + frameIndex;
+                
+                // Calculate source X position (Y is always 0 for horizontal layout)
+                const sourceX = absoluteFrame * config.frameWidth;
+                const sourceY = 0;
+                
+                // Draw the cat sprite
+                ctx.drawImage(
+                    sprite,
+                    sourceX, sourceY, config.frameWidth, config.frameHeight,  // Source
+                    x, y, config.displayWidth, config.displayHeight         // Destination
+                );
+                
+            } catch (error) {
+                console.error('❌ Cat spritesheet draw failed:', error);
+                drawFallbackCat(x, y, direction, frame);
+            }
+        }
+
+        function drawFallbackCat(x, y, direction, frame) {
+            // Fallback to pixel art cat
+            const scale = 2;
+            const px = (pX, pY, color) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(x + pX * scale, y + pY * scale, scale, scale);
+            };
+            
+            // Enhanced black cat pixel art
+            px(1, 0, '#1A1A1A'); px(2, 0, '#1A1A1A'); px(4, 0, '#1A1A1A'); px(5, 0, '#1A1A1A');
+            px(0, 1, '#1A1A1A'); px(1, 1, '#FFB6C1'); px(2, 1, '#1A1A1A'); px(3, 1, '#1A1A1A'); px(4, 1, '#1A1A1A'); px(5, 1, '#FFB6C1'); px(6, 1, '#1A1A1A');
+            px(0, 2, '#1A1A1A'); px(1, 2, '#333333'); px(2, 2, '#1A1A1A'); px(3, 2, '#1A1A1A'); px(4, 2, '#1A1A1A'); px(5, 2, '#333333'); px(6, 2, '#1A1A1A');
+            px(0, 3, '#1A1A1A'); px(1, 3, '#32CD32'); px(2, 3, '#1A1A1A'); px(3, 3, '#1A1A1A'); px(4, 3, '#1A1A1A'); px(5, 3, '#32CD32'); px(6, 3, '#1A1A1A');
+            px(0, 4, '#1A1A1A'); px(1, 4, '#00FF00'); px(2, 4, '#1A1A1A'); px(3, 4, '#FFB6C1'); px(4, 4, '#1A1A1A'); px(5, 4, '#00FF00'); px(6, 4, '#1A1A1A');
+            px(0, 5, '#1A1A1A'); px(1, 5, '#1A1A1A'); px(2, 5, '#1A1A1A'); px(3, 5, '#1A1A1A'); px(4, 5, '#1A1A1A'); px(5, 5, '#1A1A1A'); px(6, 5, '#1A1A1A');
+            px(0, 6, '#1A1A1A'); px(1, 6, '#333333'); px(2, 6, '#1A1A1A'); px(3, 6, '#1A1A1A'); px(4, 6, '#1A1A1A'); px(5, 6, '#333333'); px(6, 6, '#1A1A1A');
+            px(0, 7, '#333333'); px(1, 7, '#1A1A1A'); px(2, 7, '#1A1A1A'); px(3, 7, '#1A1A1A'); px(4, 7, '#1A1A1A'); px(5, 7, '#1A1A1A'); px(6, 7, '#333333');
+            px(0, 8, '#1A1A1A'); px(1, 8, '#1A1A1A'); px(2, 8, '#1A1A1A'); px(3, 8, '#1A1A1A'); px(4, 8, '#1A1A1A'); px(5, 8, '#1A1A1A'); px(6, 8, '#1A1A1A');
+            px(0, 9, '#1A1A1A'); px(1, 9, '#1A1A1A'); px(5, 9, '#1A1A1A'); px(6, 9, '#1A1A1A');
+            
+            // Animated tail wagging
+            const tailWag = Math.floor(frame / 15) % 3;
+            px(7, 4 + tailWag, '#1A1A1A'); px(8, 4 + tailWag, '#1A1A1A');
+            px(7, 5 + tailWag, '#1A1A1A'); px(8, 5 + tailWag, '#333333');
+            px(7, 6 + tailWag, '#1A1A1A');
+        }
+
+        function drawRoom() {
+            const room = rooms[game.currentRoom];
+            
+            if (game.currentRoom === 'bedroom') {
+                // SANDY DESERT BACKGROUND for bedroom
+                drawSandyDesertBackground();
+            } else {
+                // Original gradient background for living room
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, '#E6D49A');
+                gradient.addColorStop(1, '#D2B48C');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Floor tiles for living room
+                ctx.fillStyle = 'rgba(139, 69, 19, 0.1)';
+                for (let x = 0; x < canvas.width; x += 32) {
+                    for (let y = 0; y < canvas.height; y += 32) {
+                        ctx.fillRect(x, y, 30, 30);
+                    }
+                }
+            }
+
+            // Draw movement target indicator
+            if (game.player.targetX !== null && game.player.targetY !== null) {
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(game.player.targetX, game.player.targetY, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Pulsing effect
+                const pulse = Math.sin(Date.now() * 0.01) * 3 + 8;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(game.player.targetX, game.player.targetY, pulse, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Draw background objects first (like sea.png)
+            room.objects.filter(obj => obj.isBackground).forEach(obj => {
+                drawObject(obj);
+            });
+            
+            // Draw regular objects
+            room.objects.filter(obj => !obj.isBackground).forEach(obj => {
+                drawObject(obj);
+            });
+            
+
+        }
+
+        function drawSandyDesertBackground() {
+            // LIGHT BLUE SKY BACKGROUND (0-150px)
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, 150);
+            skyGradient.addColorStop(0, '#87CEEB'); // Sky blue at top
+            skyGradient.addColorStop(1, '#B0E0E6'); // Powder blue at horizon
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, 150);
+            
+            // Enhanced sand background with variations
+            drawEnhancedSandBackground();
+            
+            const time = Date.now() * 0.001;
+            
+            // GENTLE FLOWING SAND PARTICLES
+            drawFlowingSandParticles(time);
+            
+            // SPARKLING SAND EFFECT
+            drawSandSparkles(time);
+            
+            // FOOTPRINT TRAILS
+            drawFootprintTrails();
+            
+            // SAND KICK-UP EFFECTS
+            drawSandKickEffects();
+        }
+
+        // Initialize mail sparkle effects
+        const mailSparkles = [];
+        const maxMailSparkles = 8;
+        
+        function addMailSparkle(x, y) {
+            mailSparkles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + (Math.random() - 0.5) * 15,
+                life: 0,
+                maxLife: 1500 + Math.random() * 1000,
+                size: 1 + Math.random() * 2,
+                opacity: 0.6 + Math.random() * 0.4,
+                speedX: (Math.random() - 0.5) * 1,
+                speedY: (Math.random() - 0.5) * 1,
+                color: Math.random() > 0.5 ? '#FFD700' : '#FFF8DC'
+            });
+            
+            // Remove oldest sparkles if too many
+            if (mailSparkles.length > maxMailSparkles) {
+                mailSparkles.shift();
+            }
+        }
+        
+        function drawMailSparkles() {
+            mailSparkles.forEach((sparkle, index) => {
+                sparkle.life += 16;
+                
+                if (sparkle.life > sparkle.maxLife) {
+                    mailSparkles.splice(index, 1);
+                    return;
+                }
+                
+                // Update position
+                sparkle.x += sparkle.speedX;
+                sparkle.y += sparkle.speedY;
+                
+                // Calculate fading opacity
+                const lifeRatio = sparkle.life / sparkle.maxLife;
+                const alpha = sparkle.opacity * (1 - lifeRatio);
+                
+                if (alpha > 0.1) {
+                    ctx.fillStyle = sparkle.color.replace(')', `, ${alpha})`);
+                    if (sparkle.color.includes('#')) {
+                        // Convert hex to rgba
+                        const r = parseInt(sparkle.color.slice(1, 3), 16);
+                        const g = parseInt(sparkle.color.slice(3, 5), 16);
+                        const b = parseInt(sparkle.color.slice(5, 7), 16);
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add small cross sparkle effect
+                    ctx.strokeStyle = ctx.fillStyle;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(sparkle.x - sparkle.size, sparkle.y);
+                    ctx.lineTo(sparkle.x + sparkle.size, sparkle.y);
+                    ctx.moveTo(sparkle.x, sparkle.y - sparkle.size);
+                    ctx.lineTo(sparkle.x, sparkle.y + sparkle.size);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // Initialize bonfire sparkle effects
+        const bonfireSparkles = [];
+        const maxBonfireSparkles = 20;
+        
+        function addBonfireSparkle(x, y) {
+            // Add 2-3 sparkles per call for more intense effect
+            const sparkleCount = 2 + Math.floor(Math.random() * 2);
+            
+            for (let i = 0; i < sparkleCount; i++) {
+                bonfireSparkles.push({
+                    x: x + (Math.random() - 0.5) * 80, // Even wider spread around bonfire
+                    y: y + (Math.random() - 0.5) * 100,
+                    life: 0,
+                    maxLife: 800 + Math.random() * 1200, // 0.8-2 seconds
+                    size: 1 + Math.random() * 3, // Larger sparkles
+                    opacity: 0.6 + Math.random() * 0.4,
+                    speedX: (Math.random() - 0.5) * 3,
+                    speedY: -Math.random() * 4 - 1, // Float upward faster
+                    color: Math.random() > 0.2 ? (Math.random() > 0.5 ? '#FFA500' : '#FFD700') : '#FF6347', // Orange, gold, or red
+                    twinkle: Math.random() * Math.PI * 2, // For twinkling effect
+                    sparkleType: Math.random() > 0.7 ? 'star' : 'circle' // Different sparkle shapes
+                });
+            }
+            
+            // Remove oldest sparkles if too many
+            if (bonfireSparkles.length > maxBonfireSparkles) {
+                bonfireSparkles.splice(0, sparkleCount);
+            }
+        }
+        
+        function drawBonfireSparkles() {
+            bonfireSparkles.forEach((sparkle, index) => {
+                sparkle.life += 16;
+                
+                if (sparkle.life > sparkle.maxLife) {
+                    bonfireSparkles.splice(index, 1);
+                    return;
+                }
+                
+                // Update position
+                sparkle.x += sparkle.speedX;
+                sparkle.y += sparkle.speedY;
+                sparkle.twinkle += 0.2; // Twinkling animation
+                
+                // Calculate fading opacity with twinkling
+                const lifeRatio = sparkle.life / sparkle.maxLife;
+                const twinkleEffect = 0.7 + 0.3 * Math.sin(sparkle.twinkle);
+                const alpha = sparkle.opacity * (1 - lifeRatio) * twinkleEffect;
+                
+                if (alpha > 0.1) {
+                    // Convert hex to rgba
+                    const r = parseInt(sparkle.color.slice(1, 3), 16);
+                    const g = parseInt(sparkle.color.slice(3, 5), 16);
+                    const b = parseInt(sparkle.color.slice(5, 7), 16);
+                    
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    
+                    // Draw different sparkle shapes
+                    if (sparkle.sparkleType === 'star') {
+                        // Draw star shape
+                        ctx.save();
+                        ctx.translate(sparkle.x, sparkle.y);
+                        ctx.rotate(sparkle.twinkle);
+                        ctx.beginPath();
+                        for (let i = 0; i < 10; i++) {
+                            const radius = i % 2 === 0 ? sparkle.size * 1.5 : sparkle.size * 0.7;
+                            const angle = (i * Math.PI) / 5;
+                            const x = Math.cos(angle) * radius;
+                            const y = Math.sin(angle) * radius;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                    } else {
+                        // Draw circle
+                        ctx.beginPath();
+                        ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Add enhanced cross sparkle effect for larger sparkles
+                    if (sparkle.size > 1.5) {
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(sparkle.x - sparkle.size * 2, sparkle.y);
+                        ctx.lineTo(sparkle.x + sparkle.size * 2, sparkle.y);
+                        ctx.moveTo(sparkle.x, sparkle.y - sparkle.size * 2);
+                        ctx.lineTo(sparkle.x, sparkle.y + sparkle.size * 2);
+                        ctx.stroke();
+                        
+                        // Add diagonal lines for extra sparkle
+                        ctx.beginPath();
+                        ctx.moveTo(sparkle.x - sparkle.size * 1.4, sparkle.y - sparkle.size * 1.4);
+                        ctx.lineTo(sparkle.x + sparkle.size * 1.4, sparkle.y + sparkle.size * 1.4);
+                        ctx.moveTo(sparkle.x + sparkle.size * 1.4, sparkle.y - sparkle.size * 1.4);
+                        ctx.lineTo(sparkle.x - sparkle.size * 1.4, sparkle.y + sparkle.size * 1.4);
+                        ctx.stroke();
+                    }
+                }
+            });
+        }
+
+        // Initialize musical notes for picnic
+        const musicalNotes = [];
+        const maxMusicalNotes = 4;
+        
+        function addMusicalNote(x, y) {
+            const noteSymbols = ['♪', '♫', '♬', '🎵', '🎶'];
+            musicalNotes.push({
+                x: x + (Math.random() - 0.5) * 30,
+                y: y,
+                symbol: noteSymbols[Math.floor(Math.random() * noteSymbols.length)],
+                life: 0,
+                maxLife: 3000 + Math.random() * 1000,
+                speedY: -0.5 - Math.random() * 0.5, // Float upward
+                speedX: (Math.random() - 0.5) * 0.3,
+                opacity: 0.7 + Math.random() * 0.3,
+                size: 12 + Math.random() * 4
+            });
+            
+            if (musicalNotes.length > maxMusicalNotes) {
+                musicalNotes.shift();
+            }
+        }
+        
+        function drawMusicalNotes() {
+            musicalNotes.forEach((note, index) => {
+                note.life += 16;
+                
+                if (note.life > note.maxLife) {
+                    musicalNotes.splice(index, 1);
+                    return;
+                }
+                
+                // Update position
+                note.x += note.speedX;
+                note.y += note.speedY;
+                
+                // Calculate fading opacity
+                const lifeRatio = note.life / note.maxLife;
+                const alpha = note.opacity * (1 - lifeRatio);
+                
+                if (alpha > 0.1) {
+                    ctx.save();
+                    ctx.font = `${note.size}px serif`;
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`; // Golden notes
+                    ctx.strokeStyle = `rgba(139, 69, 19, ${alpha * 0.8})`; // Brown outline
+                    ctx.lineWidth = 1;
+                    
+                    ctx.strokeText(note.symbol, note.x, note.y);
+                    ctx.fillText(note.symbol, note.x, note.y);
+                    ctx.restore();
+                }
+            });
+        }
+        
+        // Initialize seagull call indicators
+        const seagullCalls = [];
+        const maxSeagullCalls = 2;
+        
+        function addSeagullCall(birdX, birdY) {
+            seagullCalls.push({
+                x: birdX + 15,
+                y: birdY - 10,
+                life: 0,
+                maxLife: 2000,
+                opacity: 0.8
+            });
+            
+            if (seagullCalls.length > maxSeagullCalls) {
+                seagullCalls.shift();
+            }
+        }
+        
+        function drawSeagullCalls() {
+            seagullCalls.forEach((call, index) => {
+                call.life += 16;
+                
+                if (call.life > call.maxLife) {
+                    seagullCalls.splice(index, 1);
+                    return;
+                }
+                
+                // Calculate fading opacity
+                const lifeRatio = call.life / call.maxLife;
+                const alpha = call.opacity * (1 - lifeRatio);
+                
+                if (alpha > 0.1) {
+                    ctx.save();
+                    ctx.font = '10px serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = `rgba(70, 130, 180, ${alpha})`; // Steel blue
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+                    ctx.lineWidth = 0.5;
+                    
+                    // Draw "CAW!" text
+                    const text = 'CAW!';
+                    ctx.strokeText(text, call.x, call.y);
+                    ctx.fillText(text, call.x, call.y);
+                    ctx.restore();
+                }
+            });
+        }
+
+        // Initialize sand particles array
+        const sandParticles = [];
+        const maxSandParticles = 25;
+        
+        // Initialize second layer of sand particles
+        const sandParticles2 = [];
+        const maxSandParticles2 = 145;
+        
+        // Initialize sand sparkles array
+        const sandSparkles = [];
+        const maxSandSparkles = 15;
+        
+        // Initialize footprint trails array
+        const footprintTrails = [];
+        const maxFootprints = 20;
+        
+        // Initialize sand kick-up effects array
+        const sandKickEffects = [];
+        const maxSandKicks = 15;
+        
+        // Initialize coconut falling effects
+        const fallingCoconuts = [];
+        const maxFallingCoconuts = 8;
+        
+        // Initialize palm frond rustling effects
+        const palmRustles = [];
+        const maxPalmRustles = 12;
+        
+        function drawEnhancedSandBackground() {
+            const sandWidth = canvas.width;
+            const sandHeight = canvas.height - 150;
+            const sandStartY = 150;
+            
+            // BASE SAND LAYER with gradient (dry to wet)
+            const sandGradient = ctx.createLinearGradient(0, sandStartY, 0, canvas.height);
+            sandGradient.addColorStop(0, '#f5dfa9');    // Dry sand (top)
+            sandGradient.addColorStop(1, '#e8c373');    // Wet sand (bottom)
+            
+            ctx.fillStyle = sandGradient;
+            ctx.fillRect(0, sandStartY, sandWidth, sandHeight);
+        }
+        
+        function drawWaterSparkles(time) {
+            // Find sea object to get its bounds
+            const seaObject = rooms.bedroom.objects.find(obj => obj.type === 'sea');
+            if (!seaObject) return;
+            
+            // 20 animated sparkles scattered across water surface
+            const sparkleCount = 20;
+            
+            for (let i = 0; i < sparkleCount; i++) {
+                // Distribute sparkles across the sea area
+                const baseX = seaObject.x + (i / sparkleCount) * seaObject.w;
+                const x = baseX + Math.sin(time * 2 + i) * 25;
+                
+                const baseY = seaObject.y + ((i % 4) / 4) * seaObject.h + 15;
+                const y = baseY + Math.sin(time * 3 + i * 0.8) * 6;
+                
+                // Skip if outside sea area bounds
+                if (x < seaObject.x || x > seaObject.x + seaObject.w || 
+                    y < seaObject.y || y > seaObject.y + seaObject.h) continue;
+                
+                // Calculate sparkle properties
+                const sparkleIntensity = 0.3 + Math.sin(time * 5 + i * 1.2) * 0.4;
+                const sparkleSize = 1 + Math.sin(time * 4 + i) * 1;
+                
+                // Only draw bright sparkles
+                if (sparkleIntensity > 0.5) {
+                    // Main sparkle dot
+                    ctx.fillStyle = `rgba(255, 255, 220, ${sparkleIntensity * 0.8})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, sparkleSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Cross sparkle effect
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${sparkleIntensity * 0.6})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x - sparkleSize * 1.5, y);
+                    ctx.lineTo(x + sparkleSize * 1.5, y);
+                    ctx.moveTo(x, y - sparkleSize * 1.5);
+                    ctx.lineTo(x, y + sparkleSize * 1.5);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        function initializeSandParticles() {
+            // First layer - original sand particles
+            for (let i = 0; i < maxSandParticles; i++) {
+                sandParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: 380 + Math.random() * (canvas.height - 380), // Below sea area
+                    size: 0.8 + Math.random() * 1.5,
+                    speedX: (Math.random() - 0.5) * 0.5, // Gentle horizontal drift
+                    speedY: (Math.random() - 0.5) * 0.3, // Subtle vertical movement
+                    opacity: 0.2 + Math.random() * 0.4,
+                    color: {
+                        r: 210 + Math.random() * 25,
+                        g: 185 + Math.random() * 20,
+                        b: 130 + Math.random() * 25
+                    }
+                });
+            }
+            
+            // Second layer - #f8c97c shade particles
+            for (let i = 0; i < maxSandParticles2; i++) {
+                sandParticles2.push({
+                    x: Math.random() * canvas.width,
+                    y: 380 + Math.random() * (canvas.height - 380), // Below sea area
+                    size: 1.0 + Math.random() * 2.0, // Slightly larger particles
+                    speedX: (Math.random() - 0.5) * 0.3, // Slower horizontal drift
+                    speedY: (Math.random() - 0.5) * 0.2, // Even more subtle vertical movement
+                    opacity: 0.15 + Math.random() * 0.35,
+                    color: {
+                        r: 248, // #f8c97c = rgb(248, 201, 124)
+                        g: 201,
+                        b: 124
+                    },
+                    phase: Math.random() * Math.PI * 2 // For varied floating motion
+                });
+            }
+        }
+        
+        function initializeSandSparkles() {
+            for (let i = 0; i < maxSandSparkles; i++) {
+                sandSparkles.push({
+                    x: Math.random() * canvas.width,
+                    y: 380 + Math.random() * (canvas.height - 380),
+                    life: Math.random() * 3000, // 0-3 seconds life
+                    maxLife: 2000 + Math.random() * 2000,
+                    intensity: Math.random()
+                });
+            }
+        }
+        
+        function drawFlowingSandParticles(time) {
+            // Draw first layer (original particles)
+            sandParticles.forEach(particle => {
+                // Update position
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+                // Gentle floating motion
+                particle.x += Math.sin(time * 0.5 + particle.x * 0.01) * 0.1;
+                particle.y += Math.cos(time * 0.7 + particle.y * 0.01) * 0.05;
+                
+                // Wrap around screen edges
+                if (particle.x > canvas.width + 5) particle.x = -5;
+                if (particle.x < -5) particle.x = canvas.width + 5;
+                if (particle.y > canvas.height + 5) particle.y = 380;
+                if (particle.y < 380) particle.y = canvas.height;
+                
+                // Draw particle
+                ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.opacity})`;
+                ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+            });
+            
+            // Draw second layer (#f8c97c particles)
+            sandParticles2.forEach(particle => {
+                // Update position
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+                // Different floating motion pattern for variety
+                particle.x += Math.sin(time * 0.3 + particle.phase) * 0.15;
+                particle.y += Math.cos(time * 0.4 + particle.phase) * 0.08;
+                
+                // Wrap around screen edges
+                if (particle.x > canvas.width + 5) particle.x = -5;
+                if (particle.x < -5) particle.x = canvas.width + 5;
+                if (particle.y > canvas.height + 5) particle.y = 380;
+                if (particle.y < 380) particle.y = canvas.height;
+                
+                // Draw particle with subtle opacity variation
+                const dynamicOpacity = particle.opacity * (0.8 + 0.2 * Math.sin(time * 0.8 + particle.phase));
+                ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${dynamicOpacity})`;
+                ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+            });
+        }
+        
+        function drawSandSparkles(time) {
+            sandSparkles.forEach(sparkle => {
+                sparkle.life += 16; // Increment by frame time
+                
+                if (sparkle.life > sparkle.maxLife) {
+                    // Reset sparkle to new random position
+                    sparkle.x = Math.random() * canvas.width;
+                    sparkle.y = 380 + Math.random() * (canvas.height - 380);
+                    sparkle.life = 0;
+                    sparkle.maxLife = 2000 + Math.random() * 2000;
+                    sparkle.intensity = Math.random();
+                }
+                
+                // Calculate sparkle alpha based on life cycle
+                const lifeRatio = sparkle.life / sparkle.maxLife;
+                let alpha = 0;
+                
+                if (lifeRatio < 0.3) {
+                    // Fade in
+                    alpha = (lifeRatio / 0.3) * sparkle.intensity;
+                } else if (lifeRatio < 0.7) {
+                    // Stay bright
+                    alpha = sparkle.intensity;
+                } else {
+                    // Fade out
+                    alpha = sparkle.intensity * (1 - (lifeRatio - 0.7) / 0.3);
+                }
+                
+                // Add twinkling effect
+                alpha *= (0.5 + 0.5 * Math.sin(time * 8 + sparkle.x * 0.1));
+                
+                if (alpha > 0.1) {
+                    ctx.fillStyle = `rgba(255, 248, 220, ${alpha * 0.8})`;
+                    ctx.fillRect(sparkle.x - 0.5, sparkle.y - 0.5, 2, 2);
+                    
+                    // Add small cross sparkle effect
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.6})`;
+                    ctx.fillRect(sparkle.x - 1, sparkle.y, 3, 1);
+                    ctx.fillRect(sparkle.x, sparkle.y - 1, 1, 3);
+                }
+            });
+        }
+        
+        function addFootprint(x, y, size = 8, type = 'nicholas') {
+            footprintTrails.push({
+                x: x,
+                y: y,
+                size: size,
+                type: type,
+                life: 0,
+                maxLife: 8000 + Math.random() * 4000, // 8-12 seconds
+                opacity: 0.6
+            });
+            
+            // Remove oldest footprints if too many
+            if (footprintTrails.length > maxFootprints) {
+                footprintTrails.shift();
+            }
+        }
+        
+        function addSandKick(x, y, direction, intensity = 1) {
+            // Create multiple sand particles for kick effect
+            const particleCount = Math.floor(3 + intensity * 2);
+            
+            for (let i = 0; i < particleCount; i++) {
+                sandKickEffects.push({
+                    x: x + (Math.random() - 0.5) * 15,
+                    y: y + (Math.random() - 0.5) * 10,
+                    speedX: (Math.random() - 0.5) * 6 + (direction === 'left' ? -2 : direction === 'right' ? 2 : 0),
+                    speedY: -Math.random() * 4 - 1, // Always upward initially
+                    size: 1 + Math.random() * 2,
+                    life: 0,
+                    maxLife: 800 + Math.random() * 400,
+                    color: {
+                        r: 240 + Math.random() * 15,
+                        g: 210 + Math.random() * 20,
+                        b: 140 + Math.random() * 30
+                    },
+                    gravity: 0.15
+                });
+            }
+            
+            // Remove oldest effects if too many
+            if (sandKickEffects.length > maxSandKicks * 4) {
+                sandKickEffects.splice(0, particleCount);
+            }
+        }
+        
+        function createFallingCoconut(treeX, treeY, treeType) {
+            // Create a coconut that falls from the tree occasionally
+            fallingCoconuts.push({
+                x: treeX + Math.random() * 60 + 20, // Random position along tree width + 20px offset
+                y: treeY + 40, // Start from tree canopy
+                speedX: (Math.random() - 0.5) * 2, // Slight horizontal drift
+                speedY: 0, // Starts stationary
+                rotation: 0,
+                rotationSpeed: (Math.random() - 0.5) * 0.2,
+                life: 0,
+                maxLife: 4000, // 4 seconds fall time
+                size: 8 + Math.random() * 4,
+                gravity: 0.15,
+                treeType: treeType,
+                bounced: false
+            });
+            
+            // Remove oldest coconuts if too many
+            if (fallingCoconuts.length > maxFallingCoconuts) {
+                fallingCoconuts.shift();
+            }
+        }
+        
+        function drawFallingCoconuts() {
+            fallingCoconuts.forEach((coconut, index) => {
+                coconut.life += 16;
+                
+                if (coconut.life > coconut.maxLife) {
+                    fallingCoconuts.splice(index, 1);
+                    return;
+                }
+                
+                // Update physics
+                coconut.x += coconut.speedX;
+                coconut.y += coconut.speedY;
+                coconut.speedY += coconut.gravity; // Apply gravity
+                coconut.rotation += coconut.rotationSpeed;
+                
+                // Bounce when hitting sand area
+                if (coconut.y > 450 && !coconut.bounced) {
+                    coconut.speedY *= -0.3; // Bounce with energy loss
+                    coconut.speedX *= 0.7; // Reduce horizontal speed
+                    coconut.bounced = true;
+                    
+                    // Create small sand kick when coconut lands
+                    addSandKick(coconut.x, 450, 'down', 0.5);
+                }
+                
+                // Draw the falling coconut
+                ctx.save();
+                ctx.translate(coconut.x, coconut.y);
+                ctx.rotate(coconut.rotation);
+                
+                // Coconut (brown with darker outline)
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, coconut.size, coconut.size * 0.8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Coconut highlight
+                ctx.fillStyle = '#A0522D';
+                ctx.beginPath();
+                ctx.ellipse(-coconut.size * 0.3, -coconut.size * 0.3, coconut.size * 0.3, coconut.size * 0.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawSandKickEffects() {
+            sandKickEffects.forEach((particle, index) => {
+                particle.life += 16;
+                
+                if (particle.life > particle.maxLife) {
+                    sandKickEffects.splice(index, 1);
+                    return;
+                }
+                
+                // Update physics
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                particle.speedY += particle.gravity; // Apply gravity
+                particle.speedX *= 0.98; // Air resistance
+                
+                // Calculate fading opacity
+                const lifeRatio = particle.life / particle.maxLife;
+                const opacity = (1 - lifeRatio) * 0.7;
+                
+                if (opacity > 0.05) {
+                    ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${opacity})`;
+                    ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                }
+            });
+        }
+        
+        function drawFootprintTrails() {
+            footprintTrails.forEach((footprint, index) => {
+                footprint.life += 16;
+                
+                if (footprint.life > footprint.maxLife) {
+                    footprintTrails.splice(index, 1);
+                    return;
+                }
+                
+                // Calculate fading opacity
+                const lifeRatio = footprint.life / footprint.maxLife;
+                const alpha = footprint.opacity * (1 - lifeRatio * 0.8); // Gradual fade
+                
+                if (alpha > 0.05) {
+                    ctx.fillStyle = `rgba(160, 130, 90, ${alpha})`;
+                    
+                    if (footprint.type === 'nicholas') {
+                        // Nicholas footprint (boot shape)
+                        ctx.fillRect(footprint.x - 4, footprint.y - 3, 8, 6);
+                        ctx.fillRect(footprint.x - 3, footprint.y + 3, 6, 3);
+                    } else if (footprint.type === 'cat') {
+                        // Cat paw print
+                        ctx.fillRect(footprint.x - 2, footprint.y - 2, 4, 4);
+                        // Small toe marks
+                        ctx.fillRect(footprint.x - 3, footprint.y - 4, 2, 2);
+                        ctx.fillRect(footprint.x + 1, footprint.y - 4, 2, 2);
+                        ctx.fillRect(footprint.x - 1, footprint.y - 5, 2, 2);
+                    } else if (footprint.type === 'gift') {
+                        // Gift character footprint (smaller boot)
+                        ctx.fillRect(footprint.x - 3, footprint.y - 2, 6, 4);
+                        ctx.fillRect(footprint.x - 2, footprint.y + 2, 4, 2);
+                    }
+                }
+            });
+        }
+
+        function drawGiftHearts(giftX, giftY, giftW, giftH, distanceToNicholas) {
+            const time = Date.now() * 0.001;
+            
+            // Calculate heart intensity based on distance (closer = more hearts)
+            const maxDistance = 120;
+            const intensity = 1 - (distanceToNicholas / maxDistance); // 1.0 when very close, 0.0 at max distance
+            
+            // Number of hearts based on proximity (3-12 hearts)
+            const heartCount = Math.floor(3 + intensity * 9);
+            
+            // Draw hearts around the Gift
+            for (let i = 0; i < heartCount; i++) {
+                // Create hearts in a circle around the Gift with some randomness
+                const baseAngle = (i / heartCount) * Math.PI * 2;
+                const angleOffset = Math.sin(time * 2 + i) * 0.3; // Slight wobble
+                const angle = baseAngle + angleOffset;
+                
+                // Distance from Gift center (closer when Nicholas is closer)
+                const baseRadius = 35 + intensity * 15; // 35-50 pixel radius
+                const radiusVariation = Math.sin(time * 3 + i * 0.8) * 8;
+                const radius = baseRadius + radiusVariation;
+                
+                // Calculate heart position
+                const centerX = giftX + giftW / 2;
+                const centerY = giftY + giftH / 2;
+                const heartX = centerX + Math.cos(angle) * radius;
+                const heartY = centerY + Math.sin(angle) * radius;
+                
+                // Floating motion (hearts bob up and down)
+                const floatOffset = Math.sin(time * 4 + i * 0.5) * 3;
+                const finalHeartY = heartY + floatOffset;
+                
+                // Heart size varies with intensity and time
+                const baseSize = 12 + intensity * 6; // 12-18px base size
+                const sizeVariation = Math.sin(time * 5 + i) * 2;
+                const heartSize = baseSize + sizeVariation;
+                
+                // Heart opacity based on intensity and pulsing
+                const baseOpacity = 0.6 + intensity * 0.3; // 0.6-0.9 base opacity
+                const pulseEffect = Math.sin(time * 6 + i * 0.7) * 0.2 + 0.8; // 0.6-1.0 pulse
+                const heartOpacity = baseOpacity * pulseEffect;
+                
+                // Draw the heart emoji
+                ctx.save();
+                ctx.globalAlpha = heartOpacity;
+                ctx.font = `${heartSize}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Randomly choose heart colors for variety
+                const heartEmojis = ['💖', '💕', '💓', '💗', '❤️', '🧡', '💛'];
+                const heartEmoji = heartEmojis[i % heartEmojis.length];
+                
+                // Add a subtle glow effect
+                ctx.shadowColor = 'rgba(255, 192, 203, 0.5)';
+                ctx.shadowBlur = 4;
+                
+                ctx.fillText(heartEmoji, heartX, finalHeartY);
+                
+                ctx.restore();
+            }
+            
+            // Add some sparkle effects when very close
+            if (intensity > 0.7) {
+                for (let i = 0; i < 3; i++) {
+                    const sparkleX = giftX + giftW/2 + (Math.random() - 0.5) * giftW * 1.5;
+                    const sparkleY = giftY + giftH/2 + (Math.random() - 0.5) * giftH * 1.5;
+                    const sparkleTime = time * 8 + i * 2;
+                    const sparkleOpacity = (Math.sin(sparkleTime) + 1) * 0.3;
+                    
+                    if (sparkleOpacity > 0.2) {
+                        ctx.save();
+                        ctx.globalAlpha = sparkleOpacity;
+                        ctx.font = '16px serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('✨', sparkleX, sparkleY);
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+
+        function drawShellWithShimmer(x, y, width, height, spriteKey, shellType) {
+            const time = Date.now() * 0.001;
+            
+            // Draw the shell sprite first
+            const sprite = sprites[spriteKey];
+            if (sprite && allSpritesLoaded) {
+                ctx.drawImage(sprite, x, y, width, height);
+            } else {
+                // Fallback shell
+                const shellColors = {
+                    'shell1': '#F5DEB3',
+                    'shell3': '#D2B48C', 
+                    'shell4': '#BC8F8F'
+                };
+                ctx.fillStyle = shellColors[shellType] || '#F5DEB3';
+                ctx.fillRect(x, y, width, height);
+            }
+            
+            // Add shimmer effect when sunlight hits
+            const shimmerIntensity = 0.3 + Math.sin(time * 2 + x * 0.01) * 0.4;
+            const shimmerPhase = Math.sin(time * 1.5 + y * 0.02) * 0.5 + 0.5;
+            
+            if (shimmerIntensity > 0.5 && shimmerPhase > 0.3) {
+                // Create gentle glow effect
+                const glowSize = width * 0.7 + Math.sin(time * 3) * 3;
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+                
+                const glowGradient = ctx.createRadialGradient(
+                    centerX, centerY, width * 0.2,
+                    centerX, centerY, glowSize / 2
+                );
+                glowGradient.addColorStop(0, `rgba(255, 255, 220, ${shimmerIntensity * 0.4})`);
+                glowGradient.addColorStop(0.7, `rgba(255, 240, 200, ${shimmerIntensity * 0.2})`);
+                glowGradient.addColorStop(1, 'rgba(255, 235, 180, 0)');
+                
+                ctx.fillStyle = glowGradient;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, glowSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add small sparkle dots
+                if (Math.random() < 0.1) { // 10% chance
+                    const sparkleX = centerX + (Math.random() - 0.5) * width;
+                    const sparkleY = centerY + (Math.random() - 0.5) * height;
+                    
+                    ctx.fillStyle = `rgba(255, 255, 255, ${shimmerIntensity})`;
+                    ctx.beginPath();
+                    ctx.arc(sparkleX, sparkleY, 1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawObject(obj) {
+            // Special glow effect for the birthday gift (only for actual gift objects, not Gift character)
+            if (obj.type === 'gift' && obj.spriteKey === 'Gift' && obj.special && !game.birthdayFound) {
+                const glow = Math.sin(Date.now() * 0.008) * 40 + 215;
+                ctx.fillStyle = `rgba(255, ${glow}, 0, 0.6)`;
+                ctx.fillRect(obj.x - 8, obj.y - 8, obj.w + 16, obj.h + 16);
+            }
+            
+            // Add slight shadow under Gift character
+            if (obj.type === 'gift' && obj.spriteKey === 'Gift') {
+                const shadowX = obj.x + obj.w * 0.1 - 5; // 5px left offset
+                const shadowY = obj.y + obj.h - 10; // 10px up from Gift's bottom
+                const shadowWidth = obj.w * 0.8;
+                const shadowHeight = obj.h * 0.15;
+                
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Made more transparent (was 0.25, now 0.15)
+                ctx.beginPath();
+                ctx.ellipse(
+                    shadowX + shadowWidth / 2,
+                    shadowY + shadowHeight / 2,
+                    shadowWidth / 2,
+                    shadowHeight / 2,
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+                ctx.restore();
+                
+                // Show hearts when Nicholas is nearby
+                const config = NICHOLAS_SPRITE_CONFIG;
+                const nicholasCenterX = game.player.x + config.displayWidth / 2;
+                const nicholasCenterY = game.player.y + config.displayHeight / 2;
+                const giftCenterX = obj.x + obj.w / 2;
+                const giftCenterY = obj.y + obj.h / 2;
+                
+                const distanceToNicholas = Math.sqrt(
+                    Math.pow(nicholasCenterX - giftCenterX, 2) + 
+                    Math.pow(nicholasCenterY - giftCenterY, 2)
+                );
+                
+                // Show hearts when Nicholas is within 120 pixels
+                if (distanceToNicholas < 120) {
+                    drawGiftHearts(obj.x, obj.y, obj.w, obj.h, distanceToNicholas);
+                }
+            }
+            
+            // Special animated mail effects
+            if (obj.type === 'mail') {
+                drawAnimatedMail(obj.x, obj.y, obj.w, obj.h, obj.spriteKey, game.bonfire.animFrame);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Special animated sun effects
+            if (obj.type === 'sun') {
+                drawAnimatedSun(obj.x, obj.y, obj.w, obj.h, obj.spriteKey);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Special animated bird effects
+            if (obj.type === 'bird1' || obj.type === 'bird2') {
+                drawAnimatedBird(obj.x, obj.y, obj.w, obj.h, obj.spriteKey, obj.type);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Special animated coconut tree effects
+            if (obj.type === 'coconut1' || obj.type === 'coconut2' || obj.type === 'coconut3') {
+                drawAnimatedCoconutTree(obj.x, obj.y, obj.w, obj.h, obj.spriteKey, obj.type);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Special handling for shells with shimmer effect
+            if (obj.type === 'shell1' || obj.type === 'shell3' || obj.type === 'shell4') {
+                drawShellWithShimmer(obj.x, obj.y, obj.w, obj.h, obj.spriteKey, obj.type);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Special handling for animated bonfire
+            if (obj.type === 'bonfire') {
+                drawBonfire(obj.x, obj.y, game.bonfire.animFrame);
+                return; // Don't draw sprite or fallback since we handled it
+            }
+            
+            // Draw sprite if available, otherwise fallback to colored rectangle
+            const sprite = sprites[obj.spriteKey];
+            if (sprite && allSpritesLoaded && obj.spriteKey) {
+                // Draw the actual sprite
+                ctx.drawImage(sprite, obj.x, obj.y, obj.w, obj.h);
+            } else {
+                // Fallback to colored rectangle with type label
+                const fallbackColors = {
+                    'gift': '#FFD700',
+                    'picnic': '#8B4513',
+                    'bonfire': '#FF4500',
+                    'kitty': '#1A1A1A',
+                    'crab': '#FF6B47',
+                    'cloud1': '#F0F8FF',
+                    'cloud2': '#F5F5F5', 
+                    'cloud3': '#E6E6FA',
+                    'shell1': '#F5DEB3',
+                    'shell2': '#DEB887',
+                    'shell3': '#D2B48C',
+                    'shell4': '#BC8F8F',
+                    'coconut1': '#228B22',
+                    'coconut2': '#228B22',
+                    'coconut3': '#228B22'
+                };
+                
+                ctx.fillStyle = fallbackColors[obj.type] || '#888888';
+                ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+                
+                // Add some basic details for fallback objects
+                if (obj.type === 'bed') {
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillRect(obj.x + 8, obj.y + 8, obj.w - 16, 18);
+                    ctx.fillStyle = '#FF69B4';
+                    ctx.fillRect(obj.x + 8, obj.y + 26, obj.w - 16, obj.h - 34);
+                } else if (obj.type === 'gift') {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(obj.x + obj.w/2 - 3, obj.y, 6, obj.h);
+                    ctx.fillRect(obj.x, obj.y + obj.h/2 - 3, obj.w, 6);
+                }
+                
+                // Label the fallback rectangle
+                ctx.fillStyle = '#FFF';
+                ctx.font = '10px monospace';
+                ctx.fillText(obj.type.toUpperCase(), obj.x + 5, obj.y + 15);
+            }
+        }
+
+        function movePlayer(direction) {
+            if (game.player.moving && !game.player.autoMoving) return;
+            
+            // Stop auto-movement if manual movement is triggered
+            if (game.player.autoMoving) {
+                game.player.autoMoving = false;
+                game.player.targetX = null;
+                game.player.targetY = null;
+            }
+            
+            const speed = 8;
+            let newX = game.player.x;
+            let newY = game.player.y;
+            
+            game.player.direction = direction;
+            
+            switch(direction) {
+                case 'up': newY -= speed; break;
+                case 'down': newY += speed; break;
+                case 'left': newX -= speed; break;
+                case 'right': newX += speed; break;
+            }
+            
+            const config = NICHOLAS_SPRITE_CONFIG;
+            if (newX >= 0 && newX <= canvas.width - config.displayWidth && 
+                newY >= 0 && newY <= canvas.height - config.displayHeight) {
+                if (checkCollisions(newX, newY)) {
+                    // Add footprint before moving (at old position)
+                    if (game.player.y > 380) { // Only on sand area
+                        addFootprint(game.player.x + config.displayWidth/2, game.player.y + config.displayHeight - 5, 8, 'nicholas');
+                        
+                        // Add sand kick effect when running on sand
+                        addSandKick(
+                            game.player.x + config.displayWidth/2, 
+                            game.player.y + config.displayHeight - 10, 
+                            direction, 
+                            1.2 // Intensity
+                        );
+                    }
+                    
+                    game.player.x = newX;
+                    game.player.y = newY;
+                    game.player.moving = true;
+                    game.player.moveTimer = 300;
+                    
+                    checkRoomTransition(newX, newY);
+                }
+            }
+        }
+
+        // CLICK-TO-MOVE FUNCTIONS
+        function moveToTarget(targetX, targetY) {
+            game.player.targetX = targetX;
+            game.player.targetY = targetY;
+            game.player.autoMoving = true;
+            
+            // Show visual feedback
+            showMoveIndicator(targetX, targetY);
+            console.log(`🖱️ Click-to-move: target (${targetX}, ${targetY})`);
+        }
+
+        function showMoveIndicator(x, y) {
+            const indicator = document.createElement('div');
+            indicator.className = 'move-indicator';
+            indicator.style.left = (x - 6) + 'px';
+            indicator.style.top = (y - 6) + 'px';
+            document.querySelector('.game-container').appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.remove();
+                }
+            }, 500);
+        }
+
+        function updateAutoMovement() {
+            if (!game.player.autoMoving || game.player.targetX === null) {
+                return;
+            }
+            
+            const playerCenterX = game.player.x + 40; // Simplified center calculation
+            const playerCenterY = game.player.y + 50;
+            
+            const dx = game.player.targetX - playerCenterX;
+            const dy = game.player.targetY - playerCenterY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < 10) {
+                // Reached target
+                console.log('✅ TARGET REACHED!');
+                game.player.autoMoving = false;
+                game.player.targetX = null;
+                game.player.targetY = null;
+                game.player.moving = false;
+                return;
+            }
+            
+            // Store old position for footprint
+            const oldX = game.player.x;
+            const oldY = game.player.y;
+            
+            // Move towards target
+            const speed = 4; // Faster movement
+            const moveX = (dx / distance) * speed;
+            const moveY = (dy / distance) * speed;
+            
+            game.player.x += moveX;
+            game.player.y += moveY;
+            
+            // Add footprint every few pixels moved (on sand area only)
+            if (game.player.y > 380 && Math.abs(game.player.x - oldX) + Math.abs(game.player.y - oldY) > 12) {
+                const config = NICHOLAS_SPRITE_CONFIG;
+                addFootprint(oldX + config.displayWidth/2, oldY + config.displayHeight - 5, 8, 'nicholas');
+                
+                // Add sand kick for auto-movement
+                addSandKick(
+                    oldX + config.displayWidth/2, 
+                    oldY + config.displayHeight - 10, 
+                    game.player.direction, 
+                    0.8 // Lighter intensity for auto-movement
+                );
+            }
+            
+            // Simple boundary checking
+            game.player.x = Math.max(0, Math.min(canvas.width - 80, game.player.x));
+            game.player.y = Math.max(0, Math.min(canvas.height - 100, game.player.y));
+            
+            // Set direction for animation
+            if (Math.abs(moveX) > Math.abs(moveY)) {
+                game.player.direction = moveX > 0 ? 'right' : 'left';
+            } else {
+                game.player.direction = moveY > 0 ? 'down' : 'up';
+            }
+            
+            game.player.moving = true;
+            game.player.animFrame++;
+        }
+
+        function checkCollisions(x, y) {
+            const room = rooms[game.currentRoom];
+            const config = NICHOLAS_SPRITE_CONFIG;
+            const playerRect = { 
+                x: x, 
+                y: y, 
+                w: config.displayWidth, 
+                h: config.displayHeight 
+            };
+            
+            // Check collision with solid objects only (skip background objects)
+            for (let obj of room.objects) {
+                // Skip background objects like sea - they shouldn't block movement
+                if (obj.isBackground) continue;
+                
+                // Standard collision detection for solid objects
+                if (playerRect.x < obj.x + obj.w && 
+                    playerRect.x + playerRect.w > obj.x && 
+                    playerRect.y < obj.y + obj.h && 
+                    playerRect.y + playerRect.h > obj.y) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function checkRoomTransition(x, y) {
+            // Room transitions disabled - single room experience
+            return;
+        }
+
+        function interactWithObject() {
+            const room = rooms[game.currentRoom];
+            const config = NICHOLAS_SPRITE_CONFIG;
+            const playerCenterX = game.player.x + config.displayWidth / 2;
+            const playerCenterY = game.player.y + config.displayHeight / 2;
+            
+            console.log(`🎯 Interaction check - Player center: (${playerCenterX.toFixed(1)}, ${playerCenterY.toFixed(1)})`);
+            
+            let found = false;
+            let closestObject = null;
+            let closestDistance = Infinity;
+            
+            // Find the closest object (including background objects)
+            room.objects.forEach(obj => {
+                const objCenterX = obj.x + obj.w/2;
+                const objCenterY = obj.y + obj.h/2;
+                const distance = Math.sqrt(
+                    Math.pow(playerCenterX - objCenterX, 2) + 
+                    Math.pow(playerCenterY - objCenterY, 2)
+                );
+                
+                console.log(`📦 ${obj.type} at (${objCenterX}, ${objCenterY}) - Distance: ${distance.toFixed(1)}`);
+                
+                // Find closest object within a reasonable range (300px instead of 120px)
+                if (distance < 300 && distance < closestDistance) {
+                    closestDistance = distance;
+                    closestObject = obj;
+                }
+            });
+            
+            // Interact with closest object if found
+            if (closestObject) {
+                found = true;
+                console.log(`✅ Interacting with closest object: ${closestObject.type} (${closestDistance.toFixed(1)}px away)!`);
+                if (closestObject.message === "birthday_surprise") {
+                    showBirthdayMessage();
+                } else {
+                    displayMessage(closestObject.message);
+                }
+                game.discoveries.add(closestObject.type);
+                createHeart(closestObject.x + closestObject.w/2, closestObject.y);
+            }
+            
+            // Check interaction with cat (if no object found or cat is closer)
+            const catDistance = Math.sqrt(
+                Math.pow(playerCenterX - (game.cat.x + 30), 2) + 
+                Math.pow(playerCenterY - (game.cat.y + 30), 2)
+            );
+            
+            // Interact with cat if it's the closest or no object was found
+            if (catDistance < 150 && (!found || catDistance < closestDistance)) {
+                found = true;
+                console.log(`✅ Interacting with cat (${catDistance.toFixed(1)}px away)!`);
+                const catMessages = [
+                    "🐈‍⬛ Kitty purrs contentedly! This beautiful cat adores Nicholas and follows him everywhere! 💖",
+                    "🖤 Kitty rubs against Nicholas lovingly! Their bond is absolutely precious! ✨",
+                    "🐈‍⬛ Kitty meows softly! 'Meow!' (Translation: 'Happy birthday to my favorite human!') 🎂",
+                    "🐾 Kitty's eyes sparkle with love! Kitty knows Nicholas is the best!💛",
+                    "🐈‍⬛ 💓 Kitty does a little stretch! 'Look at me being adorable for Nicholas!' 🥰"
+                ];
+                const randomMessage = catMessages[Math.floor(Math.random() * catMessages.length)];
+                displayMessage(randomMessage);
+                createHeart(game.cat.x + 30, game.cat.y);
+            }
+            
+            if (!found) {
+                showTemporaryMessage(`Nicholas doesn't see anything interesting nearby. Walk closer to objects or the cat! Current position: (${playerCenterX.toFixed(0)}, ${playerCenterY.toFixed(0)}) 🔍`, 3000);
+            }
+        }
+
+        function showBirthdayMessage() {
+            game.birthdayFound = true;
+            displayMessage("🎂✨ HAPPY BIRTHDAY NICHOLAS! ✨🎂\\n\\nToday celebrates the amazing person you are! Your dedication to fitness, your perfect style in those incredible black gym outfits, and the love you share with your adorable black cat make you absolutely wonderful!\\n\\nMay this year bring endless joy, exciting adventures, epic gym sessions, and all the happiness your heart can hold! 🎉💪🖤🐱");
+            createBirthdaySparkles();
+            setTimeout(() => createConfettiExplosion(), 500);
+        }
+
+        function showSimpleMessage(text, objectX, objectY, objectW, objectH) {
+            console.log('💬 SHOWING SIMPLE MESSAGE:', text);
+            
+            // Remove any existing simple messages first
+            const existingSimple = document.querySelectorAll('.simple-message');
+            existingSimple.forEach(msg => msg.remove());
+            
+            // Create a simple floating message below the object
+            const simpleMessage = document.createElement('div');
+            simpleMessage.className = 'simple-message';
+            
+            // Position the message below the object
+            const messageX = objectX + objectW / 2; // Center horizontally with object
+            const messageY = objectY + objectH + 5; // 5px below the object
+            
+            // Adjust position if it would go off-screen
+            const adjustedX = Math.max(10, Math.min(messageX - 100, 370)); // Keep within screen bounds
+            const adjustedY = Math.min(messageY, 600); // Keep within screen bounds
+            
+            simpleMessage.style.cssText = `
+                position: absolute;
+                top: ${adjustedY}px;
+                left: ${adjustedX}px;
+                color: white;
+                font-weight: bold;
+                font-size: 10px;
+                text-align: center;
+                z-index: 2000;
+                font-family: 'Courier New', monospace;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                animation: simpleMessageFloat 3s ease-out forwards;
+                pointer-events: none;
+                max-width: 200px;
+                line-height: 1.3;
+            `;
+            simpleMessage.textContent = text;
+            
+            // Add animation keyframes if not already added
+            if (!document.querySelector('#simple-message-style')) {
+                const style = document.createElement('style');
+                style.id = 'simple-message-style';
+                style.textContent = `
+                    @keyframes simpleMessageFloat {
+                        0% { opacity: 0; transform: scale(0.8); }
+                        10% { opacity: 1; transform: scale(1); }
+                        90% { opacity: 1; transform: scale(1); }
+                        100% { opacity: 0; transform: scale(0.9); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(simpleMessage);
+                console.log('✅ Simple message created and added to DOM');
+            } else {
+                console.error('❌ Game container not found!');
+                return;
+            }
+            
+            // Auto-remove after 5 seconds (increased from 3)
+            setTimeout(() => {
+                if (simpleMessage.parentNode) {
+                    simpleMessage.remove();
+                    console.log('🗑️ Simple message auto-removed after 5 seconds');
+                }
+            }, 5000);
+        }
+
+        function displayMessage(text) {
+            console.log('📢 DISPLAYING MESSAGE:', text);
+            
+            // Remove any existing message overlays first
+            hideMessage();
+            
+            // Create a temporary message overlay since we removed the message window
+            const messageOverlay = document.createElement('div');
+            messageOverlay.className = 'game-message-overlay';
+            messageOverlay.style.cssText = `
+                position: absolute;
+                top: 15%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(245, 245, 220, 0.98);
+                border: 4px solid #8B4513;
+                border-radius: 12px;
+                padding: 20px;
+                font-weight: bold;
+                font-size: 14px;
+                color: #2F4F4F;
+                max-width: 380px;
+                text-align: center;
+                z-index: 3000;
+                font-family: 'Courier New', monospace;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+                animation: messageAppear 0.3s ease-out;
+                line-height: 1.4;
+            `;
+            messageOverlay.innerHTML = text.replace(/\\n/g, '<br>');
+            
+            // Add close button for manual dismissal
+            const closeButton = document.createElement('div');
+            closeButton.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                cursor: pointer;
+                font-size: 18px;
+                color: #8B4513;
+                font-weight: bold;
+                width: 20px;
+                height: 20px;
+                text-align: center;
+                line-height: 18px;
+            `;
+            closeButton.innerHTML = '×';
+            closeButton.onclick = () => hideMessage();
+            messageOverlay.appendChild(closeButton);
+            
+            // Add animation keyframes if not already added
+            if (!document.querySelector('#message-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'message-animation-style';
+                style.textContent = `
+                    @keyframes messageAppear {
+                        0% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.8); }
+                        100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+                    }
+                    .game-message-overlay:hover {
+                        transform: translateX(-50%) scale(1.02);
+                        transition: transform 0.2s ease;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(messageOverlay);
+                console.log('✅ Message overlay created and added to DOM');
+                console.log('📐 Message overlay bounds:', messageOverlay.getBoundingClientRect());
+            } else {
+                console.error('❌ Game container not found!');
+                return;
+            }
+            
+            // Auto-remove after 8 seconds (increased from 5)
+            setTimeout(() => {
+                if (messageOverlay.parentNode) {
+                    messageOverlay.remove();
+                    console.log('🗑️ Message overlay auto-removed after 8 seconds');
+                }
+            }, 8000);
+        }
+
+        function hideMessage() {
+            // Remove any existing message overlays
+            const overlays = document.querySelectorAll('.game-message-overlay');
+            overlays.forEach(overlay => {
+                overlay.remove();
+            });
+            console.log(`🗑️ Removed ${overlays.length} message overlays`);
+        }
+
+        function showTemporaryMessage(text, duration = 3000) {
+            displayMessage(text);
+            setTimeout(() => {
+                hideMessage();
+            }, duration);
+        }
+
+        function checkItems() {
+            const items = Array.from(game.discoveries);
+            if (items.length === 0) {
+                showTemporaryMessage("Nicholas hasn't discovered anything yet! Walk near objects and press Talk! 🔍", 2500);
+            } else {
+                displayMessage(`🎒 Discovered: ${items.join(', ')}! ${items.length >= 3 ? 'Amazing exploring! 🌟' : 'Keep going! 🎯'}`);
+            }
+        }
+
+        function showRoomInfo() {
+            displayMessage("📍 Nicholas's Birthday Adventure 🎂\\n\\n🎨 Professional sprite system loaded! 🎨\\n\\nClick anywhere to move Nicholas, or click objects/cat to interact directly!\\n\\nFeatures:\\n🖱️ Click-to-move system\\n🎮 Horizontal 16-sprite layout\\n🎭 Professional object sprites\\n🐱 AI cat companion\\n🎁 Birthday celebration!\\n\\nFind the glowing birthday gift for a special surprise!");
+        }
+
+        function createHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.className = 'hearts-effect';
+            heart.innerHTML = '💖';
+            heart.style.position = 'absolute';
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            heart.style.fontSize = '16px';
+            heart.style.color = '#FF69B4';
+            document.querySelector('.game-container').appendChild(heart);
+            setTimeout(() => heart.remove(), 3000);
+        }
+
+        function createBirthdaySparkles() {
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'birthday-sparkle';
+                    sparkle.innerHTML = '✨';
+                    sparkle.style.position = 'absolute';
+                    sparkle.style.left = Math.random() * canvas.width + 'px';
+                    sparkle.style.top = Math.random() * (canvas.height - 100) + 'px';
+                    document.querySelector('.game-container').appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 3000);
+                }, i * 150);
+            }
+        }
+
+        function createConfettiExplosion() {
+            const confetti = ['🎉', '🎊', '🎈', '🎁', '💝', '🌟', '⭐', '🎂', '💪', '🖤', '🐱', '✨'];
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    const item = document.createElement('div');
+                    item.className = 'confetti-effect';
+                    item.style.position = 'absolute';
+                    item.style.left = Math.random() * canvas.width + 'px';
+                    item.style.top = '-20px';
+                    item.style.fontSize = '18px';
+                    item.innerHTML = confetti[Math.floor(Math.random() * confetti.length)];
+                    document.querySelector('.game-container').appendChild(item);
+                    setTimeout(() => item.remove(), 4000);
+                }, i * 120);
+            }
+        }
+
+        function updateCrab() {
+            game.crab.moveTimer++;
+            game.crab.pauseTimer++;
+            
+            // If currently moving towards target
+            if (game.crab.moving) {
+                const dx = game.crab.targetX - game.crab.x;
+                const dy = game.crab.targetY - game.crab.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < 5) {
+                    // Reached target, stop and pause
+                    game.crab.moving = false;
+                    game.crab.pauseTimer = 0;
+                } else {
+                    // Move towards target
+                    const speed = 1; // Slow crab movement
+                    const moveX = (dx / distance) * speed;
+                    const moveY = (dy / distance) * speed;
+                    
+                    // Store old position for footprint
+                    const oldX = game.crab.x;
+                    const oldY = game.crab.y;
+                    
+                    game.crab.x += moveX;
+                    game.crab.y += moveY;
+                    
+                    // Set direction based on movement
+                    if (Math.abs(moveX) > Math.abs(moveY)) {
+                        game.crab.direction = moveX > 0 ? 'right' : 'left';
+                    }
+                    
+                    // Keep crab in bounds (sand area behind coconut tree B)
+                    game.crab.x = Math.max(400, Math.min(canvas.width - 50, game.crab.x)); // Stay behind tree B (x >= 400)
+                    game.crab.y = Math.max(480, Math.min(canvas.height - 40, game.crab.y)); // Lower sand area
+                    
+                    // Add small sand kick for crab movement
+                    if (Math.abs(game.crab.x - oldX) + Math.abs(game.crab.y - oldY) > 8) {
+                        addSandKick(
+                            oldX + 17, // Center of crab
+                            oldY + 25, // Bottom of crab
+                            game.crab.direction,
+                            0.3 // Very light intensity for crab
+                        );
+                    }
+                    
+                    game.crab.animFrame++;
+                }
+            } else {
+                // Currently paused, decide when to move again
+                const pauseDuration = 180 + Math.random() * 240; // 3-7 seconds pause
+                
+                if (game.crab.pauseTimer > pauseDuration) {
+                    // Time to move to a new random location
+                    const moveDistance = 30 + Math.random() * 60; // 30-90 pixel moves
+                    const angle = Math.random() * Math.PI * 2; // Random direction
+                    
+                    game.crab.targetX = game.crab.x + Math.cos(angle) * moveDistance;
+                    game.crab.targetY = game.crab.y + Math.sin(angle) * moveDistance;
+                    
+                    // Keep target in bounds and behind coconut tree B
+                    game.crab.targetX = Math.max(400, Math.min(canvas.width - 50, game.crab.targetX)); // Stay behind tree B (x >= 400)
+                    game.crab.targetY = Math.max(480, Math.min(canvas.height - 40, game.crab.targetY)); // Lower sand area
+                    
+                    game.crab.moving = true;
+                    game.crab.moveTimer = 0;
+                }
+            }
+        }
+
+        function updateCat() {
+            const dx = game.player.x - game.cat.x;
+            const dy = game.player.y - game.cat.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            game.cat.followTimer++;
+            
+            if (distance > 70) {
+                game.cat.moving = true;
+                const speed = 3;
+                
+                // Store old position for footprint
+                const oldX = game.cat.x;
+                const oldY = game.cat.y;
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    game.cat.direction = dx > 0 ? 'right' : 'left';
+                    game.cat.x += dx > 0 ? speed : -speed;
+                } else {
+                    game.cat.direction = dy > 0 ? 'down' : 'up';
+                    game.cat.y += dy > 0 ? speed : -speed;
+                }
+                
+                // Simple boundary check for cat - just keep it in reasonable area
+                game.cat.x = Math.max(10, Math.min(canvas.width - 50, game.cat.x));
+                game.cat.y = Math.max(180, Math.min(canvas.height - 50, game.cat.y));
+                
+                // Add cat paw prints every few pixels moved (on sand area only)
+                if (game.cat.y > 380 && Math.abs(game.cat.x - oldX) + Math.abs(game.cat.y - oldY) > 15) {
+                    const config = CAT_SPRITE_CONFIG;
+                    addFootprint(oldX + config.displayWidth/2, oldY + config.displayHeight - 3, 4, 'cat');
+                    
+                    // Add small sand kick for cat
+                    addSandKick(
+                        oldX + config.displayWidth/2, 
+                        oldY + config.displayHeight - 5, 
+                        game.cat.direction, 
+                        0.4 // Much lighter intensity for cat
+                    );
+                }
+                
+                game.cat.animFrame++;
+            } else {
+                game.cat.moving = false;
+                
+                if (game.cat.followTimer % 180 === 0) {
+                    const directions = ['up', 'down', 'left', 'right'];
+                    game.cat.direction = directions[Math.floor(Math.random() * directions.length)];
+                }
+            }
+        }
+
+        function updateLoadingText(text) {
+            const loadingText = document.getElementById('loadingText');
+            if (loadingText) {
+                loadingText.textContent = text;
+            }
+        }
+
+        function updateLoadingProgress(progress) {
+            const loadingFill = document.getElementById('loadingFill');
+            if (loadingFill) {
+                loadingFill.style.width = (progress * 100) + '%';
+            }
+        }
+
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }
+
+        function gameLoop() {
+            // Debug: Log game state occasionally
+            if (window.debugCounter === undefined) window.debugCounter = 0;
+            window.debugCounter++;
+            
+            if (window.debugCounter % 120 === 0) { // Every 2 seconds at 60fps
+                console.log('🎮 Game Loop Running - Player:', game.player.x, game.player.y, 'Moving:', game.player.moving, 'Auto:', game.player.autoMoving);
+            }
+            
+            // Update movement timers
+            if (game.player.moveTimer > 0) {
+                game.player.moveTimer -= 16;
+                if (game.player.moveTimer <= 0) {
+                    game.player.moving = false;
+                }
+            }
+            
+            // Update auto-movement
+            updateAutoMovement();
+            
+            if (game.player.moving || game.player.autoMoving) {
+                game.player.animFrame++;
+            }
+            
+            // Update bonfire animation (continuous)
+            game.bonfire.animFrame++;
+            
+            updateCrab();
+            updateCat();
+            
+            // Draw everything
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawRoom();
+            drawCrab(game.crab.x, game.crab.y, game.crab.direction, game.crab.animFrame);
+            drawCat(game.cat.x, game.cat.y, game.cat.direction, game.cat.animFrame);
+            drawNicholas(game.player.x, game.player.y, game.player.direction, game.player.animFrame);
+            
+            // Draw water sparkles on top of everything
+            const time = Date.now() * 0.001;
+            drawWaterSparkles(time);
+            
+            // Draw mail sparkles
+            drawMailSparkles();
+            
+            // Draw bonfire sparkles
+            drawBonfireSparkles();
+            
+            // Draw musical notes from picnic
+            drawMusicalNotes();
+            
+            // Draw seagull calls
+            drawSeagullCalls();
+            
+            // Occasionally add musical notes above picnic (every 4-8 seconds)
+            if (Math.random() < 0.003) { // Very rare chance each frame
+                const picnicObject = rooms[game.currentRoom].objects.find(obj => obj.type === 'picnic');
+                if (picnicObject) {
+                    addMusicalNote(
+                        picnicObject.x + picnicObject.w / 2,
+                        picnicObject.y - 10
+                    );
+                }
+            }
+            
+            // Occasionally add bonfire sparkles (every 0.5-1.5 seconds) - more frequent!
+            if (Math.random() < 0.025) { // 2.5% chance each frame (increased from 1%)
+                const bonfireObject = rooms[game.currentRoom].objects.find(obj => obj.type === 'bonfire');
+                if (bonfireObject) {
+                    addBonfireSparkle(
+                        bonfireObject.x + bonfireObject.w / 2,
+                        bonfireObject.y + bonfireObject.h / 3 // From middle-top of bonfire
+                    );
+                }
+            }
+            
+            // Occasionally add seagull calls from birds (every 8-15 seconds)
+            if (Math.random() < 0.0015) { // Very rare chance each frame
+                const room = rooms[game.currentRoom];
+                const birds = room.objects.filter(obj => obj.type === 'bird1' || obj.type === 'bird2');
+                
+                if (birds.length > 0) {
+                    const randomBird = birds[Math.floor(Math.random() * birds.length)];
+                    addSeagullCall(randomBird.x, randomBird.y);
+                }
+            }
+            
+            // Draw falling coconuts
+            drawFallingCoconuts();
+            
+            // Occasionally drop coconuts from trees (every 8-15 seconds per tree)
+            if (Math.random() < 0.0008) { // Very rare chance each frame
+                const room = rooms[game.currentRoom];
+                const coconutTrees = room.objects.filter(obj => 
+                    obj.type === 'coconut1' || obj.type === 'coconut2' || obj.type === 'coconut3'
+                );
+                
+                if (coconutTrees.length > 0) {
+                    const randomTree = coconutTrees[Math.floor(Math.random() * coconutTrees.length)];
+                    createFallingCoconut(randomTree.x, randomTree.y, randomTree.type);
+                    console.log(`🥥 Coconut fell from ${randomTree.type}!`);
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'arrowup':
+                case 'w':
+                    e.preventDefault();
+                    movePlayer('up');
+                    break;
+                case 'arrowdown':
+                case 's':
+                    e.preventDefault();
+                    movePlayer('down');
+                    break;
+                case 'arrowleft':
+                case 'a':
+                    e.preventDefault();
+                    movePlayer('left');
+                    break;
+                case 'arrowright':
+                case 'd':
+                    e.preventDefault();
+                    movePlayer('right');
+                    break;
+                case ' ':
+                case 'enter':
+                    e.preventDefault();
+                    interactWithObject();
+                    break;
+                case 'escape':
+                    e.preventDefault();
+                    hideMessage();
+                    break;
+            }
+        });
+
+        // GUARANTEED WORKING CLICK-TO-MOVE!
+        canvas.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('🖱️ CLICK EVENT FIRED!');
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            console.log(`🎯 Click at: (${clickX}, ${clickY})`);
+            console.log(`📏 Current player: (${game.player.x}, ${game.player.y})`);
+            
+            // 🔧 DEBUG: Check if clicking on specific objects
+            const room = rooms[game.currentRoom];
+            
+            // Check ALL objects (including background ones) for clicks
+            let clickedObject = null;
+            room.objects.forEach(obj => {
+                const withinObject = (
+                    clickX >= obj.x && clickX <= obj.x + obj.w &&
+                    clickY >= obj.y && clickY <= obj.y + obj.h
+                );
+                
+                if (withinObject) {
+                    clickedObject = obj;
+                }
+            });
+            
+            // If we clicked on an object, show its message
+            if (clickedObject) {
+                console.log(`🚨 DIRECT OBJECT CLICK: ${clickedObject.type}`);
+                
+                // Use popup for important objects (Gift and Picnic)
+                if ((clickedObject.type === 'gift' && clickedObject.spriteKey === 'Gift') || 
+                    clickedObject.type === 'picnic') {
+                    displayMessage(clickedObject.message);
+                } else {
+                    // Use simple message for less important objects, positioned next to the object
+                    showSimpleMessage(clickedObject.message, clickedObject.x, clickedObject.y, clickedObject.w, clickedObject.h);
+                }
+                
+                game.discoveries.add(clickedObject.type);
+                createHeart(clickedObject.x + clickedObject.w/2, clickedObject.y);
+                return; // Don't do normal movement
+            }
+            
+            // Check Cat (with expanded click area)
+            const catCenterX = game.cat.x + 19; // Half of cat width (38/2)
+            const catCenterY = game.cat.y + 21.5; // Half of cat height (43/2)
+            const catClickRadius = 40; // Generous click area
+            
+            const catDistance = Math.sqrt(
+                Math.pow(clickX - catCenterX, 2) + 
+                Math.pow(clickY - catCenterY, 2)
+            );
+            
+            console.log(`🐱 Cat center: (${catCenterX}, ${catCenterY})`);
+            console.log(`🐱 Click distance to cat: ${catDistance.toFixed(1)}px`);
+            
+            if (catDistance < catClickRadius) {
+                console.log('🚨 DIRECT CAT CLICK DETECTED - Showing message immediately!');
+                const catMessages = [
+                    "🐈‍⬛ Kitty purrs contentedly! This beautiful cat adores Nicholas and follows him everywhere! 💖",
+                    "🖤 Kitty rubs against Nicholas lovingly! Their bond is absolutely precious! ✨",
+                    "🐈‍⬛ Kitty meows softly! 'Meow!' (Translation: 'Happy birthday to my favorite human!') 🎂",
+                    "🐾 Kitty's eyes sparkle with love! Kitty knows Nicholas is the best!💛",
+                    "🐈‍⬛ 💓 Kitty does a little stretch! 'Look at me being adorable for Nicholas!' 🥰"
+                ];
+                const randomMessage = catMessages[Math.floor(Math.random() * catMessages.length)];
+                displayMessage(randomMessage);
+                createHeart(game.cat.x + 19, game.cat.y);
+                return; // Don't do normal movement
+            }
+            
+            // Check Crab (with expanded click area)
+            const crabCenterX = game.crab.x + 17.5; // Half of crab width (35/2)
+            const crabCenterY = game.crab.y + 15; // Half of crab height (30/2)
+            const crabClickRadius = 35; // Generous click area
+            
+            const crabDistance = Math.sqrt(
+                Math.pow(clickX - crabCenterX, 2) + 
+                Math.pow(clickY - crabCenterY, 2)
+            );
+            
+            console.log(`🦀 Crab center: (${crabCenterX}, ${crabCenterY})`);
+            console.log(`🦀 Click distance to crab: ${crabDistance.toFixed(1)}px`);
+            
+            if (crabDistance < crabClickRadius) {
+                console.log('🚨 DIRECT CRAB CLICK DETECTED - Showing message immediately!');
+                showSimpleMessage(
+                    "🦀✨ A cute little beach crab! It's scuttling around Nicholas's birthday beach, adding to the authentic seaside atmosphere! Look at those tiny claws! 🌊🎉",
+                    game.crab.x, game.crab.y, 35, 30
+                );
+                createHeart(game.crab.x + 17.5, game.crab.y);
+                return; // Don't do normal movement
+            }
+            
+            // Direct simple movement - no collision checking
+            game.player.targetX = clickX;
+            game.player.targetY = clickY;
+            game.player.autoMoving = true;
+            game.player.moving = true;
+            
+            console.log('✅ TARGET SET - Movement should start now!');
+            
+            // Visual feedback - red dot where clicked
+            const clickDot = document.createElement('div');
+            clickDot.style.cssText = `
+                position: absolute;
+                left: ${clickX + canvas.offsetLeft}px;
+                top: ${clickY + canvas.offsetTop + 20}px;
+                width: 8px;
+                height: 8px;
+                background: red;
+                border: 2px solid white;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                animation: pulse 1s ease-out;
+            `;
+            
+            // Add pulse animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { transform: scale(0); opacity: 1; }
+                    50% { transform: scale(1.5); opacity: 0.8; }
+                    100% { transform: scale(1); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(clickDot);
+            
+            setTimeout(() => {
+                if (clickDot.parentNode) clickDot.remove();
+                if (style.parentNode) style.remove();
+            }, 1000);
+            
+            return false;
+        }, true); // Use capture phase
+
+        // UNIVERSAL TOUCH CONTROLS - Touch anywhere to move!
+        let touchStartX, touchStartY;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            touchStartX = (touch.clientX - rect.left) * scaleX;
+            touchStartY = (touch.clientY - rect.top) * scaleY;
+            
+            console.log(`👆 Touch start at (${touchStartX}, ${touchStartY})`);
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const touchEndX = (touch.clientX - rect.left) * scaleX;
+            const touchEndY = (touch.clientY - rect.top) * scaleY;
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            console.log(`👆 Touch end at (${touchEndX}, ${touchEndY}), delta: (${deltaX}, ${deltaY})`);
+            
+            if (Math.abs(deltaX) > 40 || Math.abs(deltaY) > 40) {
+                // Large swipe gesture - use as directional movement
+                console.log('👋 Swipe gesture detected');
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    movePlayer(deltaX > 0 ? 'right' : 'left');
+                } else {
+                    movePlayer(deltaY > 0 ? 'down' : 'up');
+                }
+                return;
+            }
+            
+            // Short tap - UNIVERSAL TOUCH-TO-MOVE
+            console.log('👆 Tap gesture - moving to touch location');
+            
+            const room = rooms[game.currentRoom];
+            let touchedObject = false;
+            let touchedCat = false;
+            
+            // Check if touching the cat (larger touch area for mobile)
+            const catCenterX = game.cat.x + 30;
+            const catCenterY = game.cat.y + 30;
+            const catDistance = Math.sqrt(
+                Math.pow(touchEndX - catCenterX, 2) + 
+                Math.pow(touchEndY - catCenterY, 2)
+            );
+            
+            if (catDistance < 60) { // Larger touch area for mobile
+                touchedCat = true;
+                console.log('🐱 Touched cat!');
+                
+                const targetX = Math.max(40, Math.min(canvas.width - 80, catCenterX - 20));
+                const targetY = Math.max(50, Math.min(canvas.height - 100, catCenterY + 30));
+                
+                moveToTarget(targetX, targetY);
+                
+                setTimeout(() => {
+                    const currentDistance = Math.sqrt(
+                        Math.pow((game.player.x + 40) - catCenterX, 2) + 
+                        Math.pow((game.player.y + 50) - catCenterY, 2)
+                    );
+                    if (currentDistance < 100) {
+                        interactWithObject();
+                    }
+                }, 1200);
+                
+                return;
+            }
+            
+            // Check if touching an object (consistent with proximity interaction)
+            let closestTouchedObject = null;
+            let closestTouchDistance = Infinity;
+            
+            room.objects.forEach(obj => {
+                const objCenterX = obj.x + obj.w/2;
+                const objCenterY = obj.y + obj.h/2;
+                const touchDistance = Math.sqrt(
+                    Math.pow(touchEndX - objCenterX, 2) + 
+                    Math.pow(touchEndY - objCenterY, 2)
+                );
+                
+                // Check if touch is within expanded hit area
+                const hitX = obj.x - 30; // Larger touch area for mobile
+                const hitY = obj.y - 30;
+                const hitW = obj.w + 60;
+                const hitH = obj.h + 60;
+                
+                if (touchEndX >= hitX && touchEndX <= hitX + hitW && 
+                    touchEndY >= hitY && touchEndY <= hitY + hitH) {
+                    if (touchDistance < closestTouchDistance) {
+                        closestTouchDistance = touchDistance;
+                        closestTouchedObject = obj;
+                    }
+                }
+            });
+            
+            // Interact with closest touched object
+            if (closestTouchedObject) {
+                touchedObject = true;
+                console.log(`🎯 Touched ${closestTouchedObject.type} (${closestTouchDistance.toFixed(1)}px away)!`);
+                
+                // DIRECT INTERACTION - Don't move, just show message immediately
+                if (closestTouchedObject.message === "birthday_surprise") {
+                    showBirthdayMessage();
+                } else {
+                    displayMessage(closestTouchedObject.message);
+                }
+                
+                game.discoveries.add(closestTouchedObject.type);
+                createHeart(closestTouchedObject.x + closestTouchedObject.w/2, closestTouchedObject.y);
+                
+                return; // Stop processing, we found our interaction
+            }
+            
+            // UNIVERSAL TOUCH-TO-MOVE - Move to any touched location
+            if (!touchedObject && !touchedCat) {
+                console.log('🚶 Moving to touched location');
+                
+                const config = NICHOLAS_SPRITE_CONFIG;
+                
+                let targetX = Math.max(config.displayWidth/2 + 5, Math.min(canvas.width - config.displayWidth/2 - 5, touchEndX));
+                let targetY = Math.max(config.displayHeight/2 + 5, Math.min(canvas.height - config.displayHeight/2 - 5, touchEndY));
+                
+                // Check for collision avoidance
+                for (let obj of room.objects) {
+                    if (targetX < obj.x + obj.w + 20 && targetX + config.displayWidth > obj.x - 20 && 
+                        targetY < obj.y + obj.h + 20 && targetY + config.displayHeight > obj.y - 20) {
+                        
+                        if (touchEndX < obj.x) {
+                            targetX = obj.x - config.displayWidth - 10;
+                        } else if (touchEndX > obj.x + obj.w) {
+                            targetX = obj.x + obj.w + 10;
+                        } else if (touchEndY < obj.y) {
+                            targetY = obj.y - config.displayHeight - 10;
+                        } else {
+                            targetY = obj.y + obj.h + 10;
+                        }
+                        
+                        targetX = Math.max(config.displayWidth/2, Math.min(canvas.width - config.displayWidth/2, targetX));
+                        targetY = Math.max(config.displayHeight/2, Math.min(canvas.height - config.displayHeight/2, targetY));
+                        break;
+                    }
+                }
+                
+                moveToTarget(targetX, targetY);
+            }
+        });
+
+        async function startGame() {
+            console.log('🔥 Starting Nicholas Birthday Game - Professional Edition!');
+            
+            try {
+                updateLoadingText('Loading professional sprites...');
+                updateLoadingProgress(0.2);
+                
+                await loadSprites();
+                updateLoadingProgress(0.6);
+                
+                updateLoadingText('Initializing beach sand effects...');
+                initializeSandParticles();
+                initializeSandSparkles();
+                updateLoadingProgress(0.8);
+                
+                updateLoadingText('Configuring click-to-move system...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateLoadingText('Ready to play!');
+                updateLoadingProgress(1.0);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                hideLoadingScreen();
+                
+                console.log('✨ Professional sprite system ready!');
+                console.log('🏖️ Beach sand effects initialized!');
+                console.log('🔄 Starting game loop...');
+                gameLoop();
+                
+                // Test click functionality after game starts
+                setTimeout(() => {
+                    console.log('🗺️ Game initialized. Testing click system...');
+                    console.log('Player position:', game.player.x, game.player.y);
+                    console.log('Canvas:', canvas);
+                    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Game initialization error:', error);
+                hideLoadingScreen();
+                console.log('🔄 Starting fallback game loop...');
+                gameLoop();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 DOM LOADED - Starting game...');
+            startGame();
+        });
+        
+        // Also start immediately if DOM already loaded
+        if (document.readyState === 'loading') {
+            console.log('🔄 Waiting for DOM...');
+        } else {
+            console.log('🚀 DOM READY - Starting game immediately...');
+            startGame();
+        }
+        
+        console.log('🔥 PROFESSIONAL BIRTHDAY GAME READY!');
+        console.log('🖱️ Click-to-move • 🎨 Professional sprites • 🐱 AI cat');
+    </script>
+</body>
+</html>
