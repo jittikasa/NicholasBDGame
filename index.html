@@ -3041,8 +3041,8 @@
             let touchedCat = false;
             
             // Check if touching the cat (larger touch area for mobile)
-            const catCenterX = game.cat.x + 30;
-            const catCenterY = game.cat.y + 30;
+            const catCenterX = game.cat.x + 10;
+            const catCenterY = game.cat.y + 10;
             const catDistance = Math.sqrt(
                 Math.pow(touchEndX - catCenterX, 2) + 
                 Math.pow(touchEndY - catCenterY, 2)
@@ -3083,10 +3083,10 @@
                 );
                 
                 // Check if touch is within expanded hit area
-                const hitX = obj.x - 20; // Larger touch area for mobile
-                const hitY = obj.y - 20;
-                const hitW = obj.w + 50;
-                const hitH = obj.h + 50;
+                const hitX = obj.x - 10; // Larger touch area for mobile
+                const hitY = obj.y - 10;
+                const hitW = obj.w + 30;
+                const hitH = obj.h + 30;
                 
                 if (touchEndX >= hitX && touchEndX <= hitX + hitW && 
                     touchEndY >= hitY && touchEndY <= hitY + hitH) {
