@@ -385,13 +385,13 @@
                     // CLOUDS IN SKY AREA
                     // Cloud A removed as requested, sun added behind its location
                     { 
-                        x: 200, y: 30, w: 80, h: 80, type: 'sun', 
+                        x: 200, y: 50, w: 80, h: 80, type: 'sun', 
                         spriteKey: 'sun',
                         message: "☀️🎂 The bright birthday sun shining down on Nicholas's special day! What a perfect sunny celebration! 🌞✨",
                         isBackground: true
                     },
                     { 
-                        x: 195, y: -5, w: 202, h: 130, type: 'cloud2', 
+                        x: 195, y: 15, w: 202, h: 130, type: 'cloud2', 
                         spriteKey: 'cloud B',
                         isBackground: true
                     },
@@ -478,7 +478,7 @@
 
         async function loadSprites() {
             console.log('🔥 Loading HORIZONTAL spritesheet AND object sprites...');
-            updateLoadingText('Loading your HORIZONTAL 16-sprite layout...');
+            updateLoadingText('Loading...');
             
             const spritePromises = [];
             
